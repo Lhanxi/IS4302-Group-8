@@ -1,0 +1,17 @@
+{
+  "name": "is4302-group-8",
+  "version": "1.0.0",
+  "description": "IS4302 Group 8",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "private": true,
+  "workspaces": [
+    "packages/hardhat",
+    "packages/webapp"
+  ],
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
