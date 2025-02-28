@@ -10,36 +10,41 @@ contract Patient {
     //owner of the contract is the patient
     address public owner;
     string private CID; // this is where the data is stored on the IFPS
-    mapping(address => bool) public accessList; 
-    mapping(address => string) private encryptedKeys; 
-
+    mapping(address => bool) public accessList;
+    mapping(address => string) private encryptedKeys;
 
     modifier onlyOwner() {
-        require(msg.sender == owner, "Only owner can perform this function"); 
+        require(msg.sender == owner, "Only owner can perform this function");
         _;
     }
 
-    constructor (address patient) {
+    constructor(address patient) {
         owner = patient;
     }
 
-    function grantAccess(address doctor, string memory encryptedKey) external onlyOwner {
+    function grantAccess(
+        address doctor,
+        string memory encryptedKey
+    ) external onlyOwner {
         accessList[doctor] = true;
-        encryptedKeys[doctor] = encryptedKey; 
+        encryptedKeys[doctor] = encryptedKey;
     }
 
-    function revokeAccess(address doctor) public onlyOwner() {
+    function revokeAccess(address doctor) public onlyOwner {
         accessList[doctor] = false;
     }
 
     function getEncryptionKey() external view returns (string memory) {
-        require(accessList[msg.sender], "Access denied"); 
-        return encryptedKeys[msg.sender]; 
+        require(accessList[msg.sender], "Access denied");
+        return encryptedKeys[msg.sender];
     }
 
-    function getCID() external view returns (string memory) {
-        require(accessList[msg.sender], "Access denied"); 
-        return CID; 
+    function getCID(address caller) external view returns (string memory) {
+        require(accessList[caller], "Access denied");
+        return CID;
     }
 
+    function setCID(string memory _CID) external onlyOwner {
+        CID = _CID;
+    }
 }
