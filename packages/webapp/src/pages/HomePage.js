@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
+import { Link } from "react-router-dom";
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from "../contractConfig";
 import { Container, Box, Typography, Button, Card, CardContent } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -93,6 +94,20 @@ function HomePage() {
                                 <Typography variant="subtitle1" mt={2}>
                                     Connected Account: {account}
                                 </Typography>
+
+                                <Box mt={3}>
+                                <Button
+                                    variant = "outlined"
+                                    color = "secondary"
+                                    component = {Link}
+                                    to = {`/patient-data/${account}`} // passes the Wallet Address
+                                    size="large"
+                                >
+                                    View My Patient Data
+                                </Button>
+                            </Box>
+
+
                             </Box>
                         ) : (
                             <Box textAlign="center" mt={3}>
