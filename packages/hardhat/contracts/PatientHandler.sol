@@ -34,6 +34,10 @@ contract PatientHandler {
         emit AccessRequested(patient, msg.sender);
     }
 
+    //grant access
+
+    //emit an event for read and writing of data
+
     function getPendingRequestForPatient(address patient) public view returns (address[] memory) {
         return pendingDoctors[patient]; // Return list of doctors who requested access
     }
