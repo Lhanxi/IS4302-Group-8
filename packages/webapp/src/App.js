@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import RegisterPage from "./pages/RegisterPage";
+import PatientPage from "./pages/PatientPage";
 
 function App() {
     const [account, setAccount] = useState(null);
@@ -17,6 +18,11 @@ function App() {
                     path="/register"
                     element={<RegisterPage account={account} provider={provider} />}
                 />
+                <Route
+                    path="/patient"
+                    element={<PatientPage />}  
+                />
+                
             </Routes>
     );
 }

@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { Button } from '@mui/material';
+import { useNavigate } from 'react-router-dom'; 
 
 // PatientHandler contract details
-const patientHandlerAddress = "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"; // Replace with actual address
+const patientHandlerAddress = "0x9A676e781A523b5d0C0e43731313A708CB607508"; // Replace with actual address
 const patientHandlerAbi = [
   "function registerPatient() external",
 ];
+
+//for the navigation to the view page
+
 
 const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [account, setAccount] = useState(null);
   const [provider, setProvider] = useState(null);
+  const navigate = useNavigate();
 
   // Ensure we are using a signer to send transactions
   const getSigner = async () => {
@@ -115,6 +120,16 @@ const RegisterPage = () => {
         disabled={loading}
       >
         {loading ? "Registering..." : "Register"}
+      </Button>
+
+      {/* Button to navigate to the PatientPage */}
+      <Button
+        variant="outlined"
+        color="secondary"
+        onClick={() => navigate('/patient')}
+        style={{ marginTop: '10px' }}
+      >
+        Go to Patient Page
       </Button>
     </div>
   );

@@ -21,7 +21,7 @@ contract PatientHandler {
         Patient patientContract = new Patient(msg.sender);
         patientContracts[msg.sender] = address(patientContract);
 
-        emit PatientRegistered(msg.sender, address(patientContract));
+        emit PatientRegistered(msg.sender, patientContracts[msg.sender]);
     }
 
     function requestAccess(address patient) external {
@@ -40,6 +40,10 @@ contract PatientHandler {
 
     function getPendingRequestForPatient(address patient) public view returns (address[] memory) {
         return pendingDoctors[patient]; // Return list of doctors who requested access
+    }
+
+    function getPatientContract(address patient) public view returns (address) {
+        return patientContracts[patient];
     }
 }
 
