@@ -1,16 +1,24 @@
-import React from "react";
-import { Routes, Route } from "react-router-dom";
+import React, { useState } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
-import DoctorPage from "./pages/DoctorPage";
+import RegisterPage from "./pages/RegisterPage";
 
+function App() {
+    const [account, setAccount] = useState(null);
+    const [provider, setProvider] = useState(null);
 
-const App = () => (
-  <div>
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/doctor" element={<DoctorPage />} />
-    </Routes>
-  </div>
-)
+    return (
+            <Routes>
+                <Route
+                    path="/"
+                    element={<HomePage account={account} setAccount={setAccount} provider={provider} setProvider={setProvider} />}
+                />
+                <Route
+                    path="/register"
+                    element={<RegisterPage account={account} provider={provider} />}
+                />
+            </Routes>
+    );
+}
 
 export default App;

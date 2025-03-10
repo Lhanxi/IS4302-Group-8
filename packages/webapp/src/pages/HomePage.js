@@ -1,14 +1,13 @@
-import React, { useState } from "react";
+import React from "react";
 import { ethers } from "ethers";
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from "../contractConfig";
 import { Container, Box, Typography, Button, Card, CardContent } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { connectWallet } from "../utils/connectWallet";
+import { Link } from "react-router-dom"; // Import Link for navigation
 
-function HomePage() {
-    const [account, setAccount] = useState(null);
-    const [contract, setContract] = useState(null);
-    const [provider, setProvider] = useState(null);
+function HomePage({ account, setAccount, provider, setProvider }) {
+    const [contract, setContract] = React.useState(null);
 
     const handleConnectWallet = async () => {
         const walletData = await connectWallet();
@@ -106,6 +105,15 @@ function HomePage() {
                                 </Button>
                             </Box>
                         )}
+
+                        {/* Link to RegisterPage */}
+                        <Box textAlign="center" mt={3}>
+                            <Link to="/register">
+                                <Button variant="contained" color="secondary" size="large">
+                                    Go to Register Page
+                                </Button>
+                            </Link>
+                        </Box>
                     </CardContent>
                 </Card>
             </Container>

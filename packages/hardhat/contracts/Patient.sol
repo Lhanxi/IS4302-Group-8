@@ -10,8 +10,10 @@ contract Patient {
     //owner of the contract is the patient
     address public owner;
     string private CID; // this is where the data is stored on the IFPS
-    mapping(address => bool) public accessList; 
+    mapping(address => bool) public accessList; //tracks whether a doctor has been given access
     mapping(address => string) private encryptedKeys; 
+    mapping(address => mapping(address => bool)) public accessRequests; // Tracks access requests
+    address[] public doctors;
 
 
     modifier onlyOwner() {
@@ -26,6 +28,12 @@ contract Patient {
     function grantAccess(address doctor, string memory encryptedKey) external onlyOwner {
         accessList[doctor] = true;
         encryptedKeys[doctor] = encryptedKey; 
+    }
+
+    function requestAccess() external {
+        require(msg.sender != owner, "Patient cannot request access to themselves");
+        accessRequests[owner][msg.sender] = true;  // This tracks if a doctor requested access
+        doctors.push(msg.sender);  // Store the doctor address in the array
     }
 
     function revokeAccess(address doctor) public onlyOwner() {
