@@ -1,35 +1,123 @@
-import React, { useState } from "react";
-import { useDropzone } from "react-dropzone";
-import "./DoctorPage.css"; // Import CSS file
+import React, { useState, useEffect } from "react";
+import { ethers } from "ethers";
+import { Button, TextField } from "@mui/material";
+
+// PatientHandler contract details
+const patientHandlerAddress = "0x9A676e781A523b5d0C0e43731313A708CB607508"; // Replace with actual address
+const patientHandlerAbi = ["function requestAccess(address patient) external"];
 
 const DoctorPage = () => {
-    const [file, setFile] = useState(null);
+  const [patientAddress, setPatientAddress] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [account, setAccount] = useState(null);
+  const [provider, setProvider] = useState(null);
 
-    const { getRootProps, getInputProps } = useDropzone({
-        accept: "*",
-        onDrop: (acceptedFiles) => {
-            setFile(acceptedFiles[0]); // Store the selected file
-        },
-    });
+  // Function to get signer
+  const getSigner = async () => {
+    if (!window.ethereum) {
+      alert("Please install MetaMask!");
+      return null;
+    }
 
-    return (
-        <div className="container">
-            <div className="upload-box">
-                <h2>Upload a File</h2>
+    try {
+      const newProvider = new ethers.BrowserProvider(window.ethereum);
+      await newProvider.send("eth_requestAccounts", []); // Request permission
+      setProvider(newProvider);
 
-                <div {...getRootProps()} className="dropzone">
-                    <input {...getInputProps()} />
-                    <p>Drag & drop a file here, or click to select</p>
-                </div>
+      const signer = await newProvider.getSigner();
+      return signer;
+    } catch (error) {
+      console.error("Error creating signer:", error);
+      setError("Error creating signer. Please check MetaMask.");
+      return null;
+    }
+  };
 
-                {file && (
-                    <p className="file-info">
-                        Selected: {file.name}
-                    </p>
-                )}
-            </div>
-        </div>
-    );
+  // Fetch connected account on load
+  useEffect(() => {
+    const initAccount = async () => {
+      if (window.ethereum) {
+        try {
+          const [selectedAccount] = await window.ethereum.request({
+            method: "eth_requestAccounts",
+          });
+          if (selectedAccount) {
+            setAccount(selectedAccount);
+            console.log("Selected Account: ", selectedAccount);
+          }
+        } catch (err) {
+          console.error("Error requesting account:", err);
+          setError("Error accessing MetaMask. Please try again.");
+        }
+      }
+    };
+
+    initAccount();
+  }, []);
+
+  const requestAccess = async () => {
+    if (!patientAddress) {
+      setError("Please enter a valid patient address.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const signer = await getSigner();
+      if (!signer) {
+        alert("Signer not available.");
+        setLoading(false);
+        return;
+      }
+
+      const contract = new ethers.Contract(patientHandlerAddress, patientHandlerAbi, signer);
+      console.log("Contract instance:", contract);
+
+      const tx = await contract.requestAccess(patientAddress);
+      console.log("Transaction Sent:", tx);
+
+      await tx.wait(); // Wait for transaction confirmation
+      console.log("Transaction Mined:", tx);
+
+      alert("Access request sent successfully!");
+    } catch (err) {
+      console.error("Error requesting access:", err);
+      if (err.reason?.includes("Patient is not registered")) {
+        setError("User does not exist.");
+      } else {
+        setError("Transaction failed. Please try again.");
+      }
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ padding: "20px", maxWidth: "400px", margin: "auto" }}>
+      <h2>Doctor Page</h2>
+      <TextField
+        label="Enter patient address"
+        variant="outlined"
+        fullWidth
+        value={patientAddress}
+        onChange={(e) => setPatientAddress(e.target.value)}
+        style={{ marginBottom: "10px" }}
+      />
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={requestAccess}
+        disabled={loading}
+        fullWidth
+      >
+        {loading ? "Requesting..." : "Request Access"}
+      </Button>
+      {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
+    </div>
+  );
 };
 
 export default DoctorPage;
