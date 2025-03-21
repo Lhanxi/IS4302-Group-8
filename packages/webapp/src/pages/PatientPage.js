@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
+import { PatientAddress, PatientHandlerAddress  } from './contractAdress';
 
 const PatientPage = () => {
     const [doctors, setDoctors] = useState([]);
@@ -10,7 +11,6 @@ const PatientPage = () => {
     const [isRegistered, setIsRegistered] = useState(false);
     const [error, setError] = useState(null);
 
-    const patientHandlerAddress = "0x9A676e781A523b5d0C0e43731313A708CB607508";
     const patientHandlerAbi = [
       "function getPendingRequestForPatient(address patient) public view returns (address[] memory)",
       "function registerPatient() external",
@@ -59,7 +59,7 @@ const PatientPage = () => {
                 setCurrentAccount(accounts[0]);
                 console.log("Current account:", accounts[0]);
 
-                const patientHandlerContractInstance = new ethers.Contract(patientHandlerAddress, patientHandlerAbi, signer);
+                const patientHandlerContractInstance = new ethers.Contract(PatientHandlerAddress, patientHandlerAbi, signer);
                 setPatientHandlerContract(patientHandlerContractInstance);
                 console.log("PatientHandler contract initialized:", patientHandlerContractInstance);
 
@@ -67,7 +67,7 @@ const PatientPage = () => {
                 let patientAddress;
                 try {
                     patientAddress = await patientHandlerContractInstance.getPatientContract(accounts[0]);
-                    console.log("Fetched patient contract address:", patientAddress);
+                    console.log("Fetched patient contract address:", PatientAddress);
                 } catch (err) {
                     console.error("Error fetching patient contract:", err);
                     setError("Failed to fetch patient contract. Please try again.");
@@ -86,7 +86,7 @@ const PatientPage = () => {
                 setIsRegistered(true);
 
                 console.log("Initializing patient contract...");
-                const patientContractInstance = new ethers.Contract(patientAddress, patientAbi, signer);
+                const patientContractInstance = new ethers.Contract(PatientAddress, patientAbi, signer);
                 setPatientContract(patientContractInstance);
                 console.log("Patient contract initialized:", patientContractInstance);
 

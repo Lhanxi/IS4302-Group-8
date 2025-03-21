@@ -10,6 +10,8 @@ contract Patient {
     //owner of the contract is the patient
     address public owner;
     string private CID; // this is where the data is stored on the IFPS
+    string private patientAES; //this is the AES key that is used to store 
+    string public patientPublicKey; //this is the 
     mapping(address => bool) public accessList; //tracks whether a doctor has been given access
     mapping(address => string) private encryptedKeys; 
     mapping(address => mapping(address => bool)) public accessRequests; // Tracks access requests
@@ -48,6 +50,10 @@ contract Patient {
     function getCID() external view returns (string memory) {
         require(accessList[msg.sender], "Access denied"); 
         return CID; 
+    }
+
+    function setPatientPublicKey(string memory publicKey) external {
+        patientPublicKey = publicKey;
     }
 
 }

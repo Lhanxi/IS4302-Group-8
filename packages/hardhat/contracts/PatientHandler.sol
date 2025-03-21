@@ -11,18 +11,23 @@ contract PatientHandler {
     mapping(address => address) public patientContracts; // Maps patient to their contract
     mapping(address => mapping(address => bool)) public accessRequests; // Tracks access requests
     mapping(address => address[]) private pendingDoctors; // List of doctors per patient
+    mapping(address => string) patientPublicKeys;
 
     event PatientRegistered(address indexed patient, address contractAddress);
     event AccessRequested(address indexed patient, address indexed doctor);
 
     function registerPatient() external {
-        require(patientContracts[msg.sender] == address(0), "Patient already registered");
+    require(patientContracts[msg.sender] == address(0), "Patient already registered");
 
-        Patient patientContract = new Patient(msg.sender);
-        patientContracts[msg.sender] = address(patientContract);
+    Patient patientContract = new Patient(msg.sender);
+    address deployedAddress = address(patientContract);
+    require(deployedAddress != address(0), "Failed to deploy Patient contract");
 
-        emit PatientRegistered(msg.sender, patientContracts[msg.sender]);
-    }
+    patientContracts[msg.sender] = deployedAddress;
+
+    emit PatientRegistered(msg.sender, deployedAddress);
+}
+
 
     function requestAccess(address patient) external {
         require(patientContracts[patient] != address(0), "Patient is not registered");
@@ -34,6 +39,8 @@ contract PatientHandler {
         emit AccessRequested(patient, msg.sender);
     }
 
+    function setPatientPublicKey(string memory publicKey) public {
+    }
     //grant access
 
     //emit an event for read and writing of data 
