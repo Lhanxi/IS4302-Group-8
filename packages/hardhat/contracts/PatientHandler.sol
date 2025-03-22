@@ -17,15 +17,15 @@ contract PatientHandler {
     event AccessRequested(address indexed patient, address indexed doctor);
 
     function registerPatient() external {
-    require(patientContracts[msg.sender] == address(0), "Patient already registered");
+        require(patientContracts[msg.sender] == address(0), "Patient already registered");
 
-    Patient patientContract = new Patient(msg.sender);
-    address deployedAddress = address(patientContract);
-    require(deployedAddress != address(0), "Failed to deploy Patient contract");
+        Patient patientContract = new Patient(msg.sender);
+        address deployedAddress = address(patientContract);
+        require(deployedAddress != address(0), "Failed to deploy Patient contract");
 
-    patientContracts[msg.sender] = deployedAddress;
+        patientContracts[msg.sender] = deployedAddress;
 
-    emit PatientRegistered(msg.sender, deployedAddress);
+        emit PatientRegistered(msg.sender, deployedAddress);
 }
 
 
@@ -34,7 +34,12 @@ contract PatientHandler {
         require(!accessRequests[patient][msg.sender], "Access request already sent");
 
         accessRequests[patient][msg.sender] = true;
-        pendingDoctors[patient].push(msg.sender); // Store doctor address
+        pendingDoctors[patient].push(msg.sender); 
+
+        address patientContract = patientContracts[patient];
+        Patient patientContractInstance = Patient(patientContract);
+
+        patientContractInstance.requestAccess(msg.sender);
 
         emit AccessRequested(patient, msg.sender);
     }

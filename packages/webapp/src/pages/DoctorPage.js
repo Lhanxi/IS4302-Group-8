@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { Button, TextField } from "@mui/material";
+import { PatientHandlerAddress } from "./contractAdress";
 
 // PatientHandler contract details
-const patientHandlerAddress = "0x9A676e781A523b5d0C0e43731313A708CB607508"; // Replace with actual address
 const patientHandlerAbi = ["function requestAccess(address patient) external"];
 
 const DoctorPage = () => {
@@ -73,7 +73,7 @@ const DoctorPage = () => {
         return;
       }
 
-      const contract = new ethers.Contract(patientHandlerAddress, patientHandlerAbi, signer);
+      const contract = new ethers.Contract(PatientHandlerAddress, patientHandlerAbi, signer);
       console.log("Contract instance:", contract);
 
       const tx = await contract.requestAccess(patientAddress);

@@ -10,35 +10,29 @@ contract Patient {
     //owner of the contract is the patient
     address public owner;
     string private CID; // this is where the data is stored on the IFPS
-    string private patientAES; //this is the AES key that is used to store 
+    string public patientAES; //this is the AES key that is used to encrypt datat, it is encrypted with the patient public key
     string public patientPublicKey; //this is the 
     mapping(address => bool) public accessList; //tracks whether a doctor has been given access
-    mapping(address => string) private encryptedKeys; 
-    mapping(address => mapping(address => bool)) public accessRequests; // Tracks access requests
+    mapping(address => string) private encryptedKeys; //the AES key for doctors 
     address[] public doctors;
 
-
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only owner can perform this function"); 
-        _;
-    }
 
     constructor (address patient) {
         owner = patient;
     }
 
-    function grantAccess(address doctor, string memory encryptedKey) external onlyOwner {
+    function grantAccess(address doctor, string memory encryptedKey) external {
         accessList[doctor] = true;
         encryptedKeys[doctor] = encryptedKey; 
     }
 
-    function requestAccess() external {
-        require(msg.sender != owner, "Patient cannot request access to themselves");
-        accessRequests[owner][msg.sender] = true;  // This tracks if a doctor requested access
-        doctors.push(msg.sender);  // Store the doctor address in the array
+    function requestAccess(address doctor) external {
+        require(doctor != owner, "Patient cannot request access to themselves");
+        doctors.push(doctor);  // Store the doctor address in the array
+        accessList[doctor] = false;  //set the initial request as false
     }
 
-    function revokeAccess(address doctor) public onlyOwner() {
+    function revokeAccess(address doctor) public {
         accessList[doctor] = false;
     }
 
@@ -47,13 +41,25 @@ contract Patient {
         return encryptedKeys[msg.sender]; 
     }
 
+    function checkDoctorAccess(address doctor) external view returns (bool) {
+        return accessList[doctor];
+    }
+
     function getCID() external view returns (string memory) {
         require(accessList[msg.sender], "Access denied"); 
         return CID; 
     }
 
+    function getAES() external view returns (string memory) {
+        return patientAES;
+    }
+
     function setPatientPublicKey(string memory publicKey) external {
         patientPublicKey = publicKey;
+    }
+
+    function setEncryptedAESKey(string memory encryptedAES) external {
+        patientAES = encryptedAES;
     }
 
 }

@@ -3,15 +3,19 @@ import forge from 'node-forge';
 import { ethers } from 'ethers';
 import { Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-
-const patientHandlerAddress = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82";
+import { generateAESKey } from './AESgenerator';
+import encryptAESKey from './EncryptAES';
+import { PatientHandlerAddress } from './contractAdress';
 
 const patientHandlerAbi = [
   "function registerPatient() external",
   "function getPatientContract(address patient) public view returns (address)", 
     "function setPatientPublicKey(string memory publicKey) public",
 ];
-const patientAbi = ["function setPatientPublicKey(string memory publicKey) external"];
+const patientAbi = [
+  "function setPatientPublicKey(string memory publicKey) external", 
+  "function setEncryptedAESKey(string memory encryptedAES) external" 
+];
 
 const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
@@ -59,6 +63,7 @@ const RegisterPage = () => {
     });
   };
   
+  
 
   
   const registerPatient = async () => {
@@ -73,7 +78,7 @@ const RegisterPage = () => {
       }
 
       console.log("Creating PatientHandler contract instance...");
-      const patientHandler = new ethers.Contract(patientHandlerAddress, patientHandlerAbi, signer);
+      const patientHandler = new ethers.Contract(PatientHandlerAddress, patientHandlerAbi, signer);
       console.log("Calling registerPatient...");
 
       const tx = await patientHandler.registerPatient();
@@ -81,21 +86,29 @@ const RegisterPage = () => {
       console.log("Transaction Receipt:", receipt);
 
       const { privateKeyPem, publicKeyPem } = await generateRSAKeyPair();
+      const { key, exportedKey } = await generateAESKey(); 
+      console.log("exported AES: ", key); 
+      console.log("exported AES: ", exportedKey); 
 
+      //generate the encryptedKey
+      console.log("encrypting the key")
+      const encryptedAESKey = await encryptAESKey(exportedKey, publicKeyPem);
+      console.log("encryptedAESKey", encryptedAESKey);
       
       console.log("Fetching patient contract address...");
-
       const patientContractAddress = await patientHandler.getPatientContract(await signer.getAddress());
       console.log("Patient contract address:", patientContractAddress);
       
       console.log("Creating Patient contract instance...");
 
-
       const patientContract = new ethers.Contract(patientContractAddress, patientAbi, signer);
       console.log("Setting public key in patient contract...");
-      const tx1 = await patientHandler.setPatientPublicKey(publicKeyPem);
+      const tx1 = await patientContract.setPatientPublicKey(publicKeyPem);
       await tx1.wait();
       console.log("Public key stored successfully.");
+
+      await patientContract.setEncryptedAESKey(encryptedAESKey);
+
 
       alert("Patient registered successfully! Please save your private key securely.");
     } catch (err) {
