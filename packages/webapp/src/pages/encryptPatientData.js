@@ -12,7 +12,7 @@ async function encryptPatientData(patientData, aesKey) {
     // Import the AES key into a CryptoKey object
     const cryptoKey = await crypto.subtle.importKey(
         "raw", 
-        new TextEncoder().encode(aesKey), 
+        aesKey, 
         { name: "AES-GCM" }, 
         false, 
         ["encrypt"]

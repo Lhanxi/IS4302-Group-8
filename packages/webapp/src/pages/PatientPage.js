@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import { PatientAddress, PatientHandlerAddress  } from './contractAdress';
+import { PatientAddress, PatientHandlerAddress, DoctorHandlerAddress  } from './contractAdress';
+import encryptAESKey from './EncryptAES';
+import { decryptAESKey } from './DecryptAES';
 
 const PatientPage = () => {
     const [doctors, setDoctors] = useState([]);
@@ -10,6 +12,7 @@ const PatientPage = () => {
     const [currentAccount, setCurrentAccount] = useState(null);
     const [isRegistered, setIsRegistered] = useState(false);
     const [error, setError] = useState(null);
+    const [requestSigner, setSigner] = useState(null);
 
     // State for private key input
     const [showPrivateKeyForm, setShowPrivateKeyForm] = useState(false);
@@ -28,8 +31,17 @@ const PatientPage = () => {
         "function revokeAccess(address doctor) external",
         "function grantAccess(address doctor, string memory encryptedKey) external", 
         "function getAES() external view returns (string memory)", 
-        "function checkDoctorAccess(address doctor) external view returns (bool)"
+        "function checkDoctorAccess(address doctor) external view returns (bool)", 
+        "function setDoctorEncryptedAES(address doctor, string memory encryptedAES) external",
     ];
+
+    const doctorHandlerAbi = [
+        "function getDoctorContractAddress(address _doctor) view public returns (address)",
+    ]; 
+
+    const doctorAbi = [
+        "function getPublicKey() public view returns (string memory)",
+    ]
 
     const getProviderAndSigner = async () => {
         if (!window.ethereum) {
@@ -42,6 +54,7 @@ const PatientPage = () => {
         const newProvider = new ethers.BrowserProvider(ethereum);
         await newProvider.send("eth_requestAccounts", []);
         const signer = await newProvider.getSigner();
+        setSigner(signer);
 
         console.log("Provider and Signer initialized.");
         return { provider: newProvider, signer };
@@ -125,6 +138,7 @@ const PatientPage = () => {
             console.log("Creating Patient contract instance...");
             const patientContract = new ethers.Contract(patientContractAddress, patientAbi, signer);
 
+
             const doctorsList = [];
             for (let address of pendingDoctors) {
                 console.log("Checking access status for doctor:", address);
@@ -155,42 +169,60 @@ const PatientPage = () => {
             alert("Please enter your private key!");
             return;
         }
-
+    
         try {
             console.log("Patient Contract:", patientContract);
-            
-            // Simulating decryption (replace this with actual decryption logic)
-            const decryptedAES = await decryptAESWithPrivateKey(privateKey);
+
+            const encryptedAES = await patientContract.getAES();
+            console.log("AES: ", encryptedAES);
+            const decryptedAES = await decryptAESKey(encryptedAES, privateKey);
             console.log("Decrypted AES Key:", decryptedAES);
-
-            //encrypt the AES again (need to further be implemented)
-
+    
+            // Encrypt the AES again and first get the doctor public key
+            const doctorHandler = await new ethers.Contract(DoctorHandlerAddress, doctorHandlerAbi, requestSigner);
+            console.log("Doctor Handler:", doctorHandler);
+    
+            const doctorAddress = await doctorHandler.getDoctorContractAddress(selectedDoctor);
+            console.log("Doctor Contract Address:", doctorAddress);
+    
+            const doctorContract = await new ethers.Contract(doctorAddress, doctorAbi, requestSigner); 
+            console.log("Doctor Contract:", doctorContract);
+    
+            const doctorPublicKey = await doctorContract.getPublicKey(); 
+            console.log("Doctor Public Key:", doctorPublicKey);
+    
+            const doctorEncryptedAES = await encryptAESKey(decryptedAES, doctorPublicKey);
+            console.log("Encrypted AES Key for Doctor:", doctorEncryptedAES);
+    
+            await patientContract.setDoctorEncryptedAES(selectedDoctor, doctorEncryptedAES);
+            console.log("Doctor's Encrypted AES Key set in the contract.");
+    
             // Call the contract function to grant access
-            const tx = await patientContract.grantAccess(selectedDoctor, decryptedAES);
+            const tx = await patientContract.grantAccess(selectedDoctor, doctorEncryptedAES);
+            console.log("Transaction for granting access:", tx);
+    
             await tx.wait(); // Wait for the transaction to be confirmed
             console.log("Access granted to doctor:", selectedDoctor);
-
+    
             // Now check if access is granted
             const app = await patientContract.checkDoctorAccess(selectedDoctor);
             console.log("Doctor post approve:", app);
-
-
+    
             // Update UI
             setDoctors(doctors.map(doc => doc.doctor === selectedDoctor ? { ...doc, access: "Approved" } : doc));
+            console.log("Doctors updated with approval status.");
+    
         } catch (err) {
             console.error("Grant access error:", err);
             setError("Failed to grant access. Please try again.");
         }
-
+    
         // Close the form
         setShowPrivateKeyForm(false);
         setPrivateKey("");
+        console.log("Private key form closed.");
     };
-
-    //dummy function for now
-    const decryptAESWithPrivateKey = (privateKey) => {
-        return "decryptedAESKey"; // Replace with actual decryption logic
-    };
+    
 
 
     const handleRevokeAccess = async (doctor) => {

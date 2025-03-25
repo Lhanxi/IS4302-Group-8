@@ -6,6 +6,7 @@ import forge from 'node-forge';
 import { ethers } from 'ethers';
 import { teal } from "@mui/material/colors";
 import encryptPatientData from "./encryptPatientData";
+import { decryptAESKey } from "./DecryptAES";
 
 function UploadPatientData() {
     const [patientName, setPatientName] = useState("");
@@ -48,10 +49,6 @@ function UploadPatientData() {
         }
       };
 
-    const decryptAESKey =  (encryptedAES, privateKey) => {
-        return "decryptedKey";
-    };
-
     // Function to handle patient account submission
     const handleAccountSubmit = () => {
         if (!patientAccount) {
@@ -75,6 +72,12 @@ function UploadPatientData() {
         console.log("Doctor Private Key set:", doctorPrivateKey);
         setError("");  // Clear error on successful key set
     };
+
+    function isValidAESKeyLength(aesKey) {
+        // Check if the length of the key is either 16 bytes (128 bits) or 32 bytes (256 bits)
+        return aesKey.length === 16 || aesKey.length === 32;
+    }
+    
 
     const handleSubmit = async () => {
         try {
@@ -104,6 +107,9 @@ function UploadPatientData() {
     
             const decryptedAESKey = await decryptAESKey(encryptedAES, doctorPrivateKey);
             console.log("Decrypted AES Key:", decryptedAESKey);
+
+            console.log("AES test", isValidAESKeyLength(decryptedAESKey));
+            console.log("AES length", )
     
             const patientData = {
                 name: patientName,

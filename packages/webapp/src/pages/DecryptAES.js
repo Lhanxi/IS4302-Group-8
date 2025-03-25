@@ -2,6 +2,7 @@ import forge from 'node-forge';
 
 export function decryptAESKey(encryptedAESKeyBase64, privateKeyPem) {
     try {
+        console.log("pk", privateKeyPem);
         const privateKey = forge.pki.privateKeyFromPem(privateKeyPem);
 
         // Decode from Base64

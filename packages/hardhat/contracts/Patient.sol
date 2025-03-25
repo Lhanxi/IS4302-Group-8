@@ -69,4 +69,8 @@ contract Patient {
         patientAES = encryptedAES;
     }
 
+    function setDoctorEncryptedAES(address doctor, string memory encryptedAES) external {
+        encryptedKeys[doctor] = encryptedAES;
+    }
+
 }

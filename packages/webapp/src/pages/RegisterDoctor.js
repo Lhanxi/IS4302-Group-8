@@ -5,7 +5,7 @@ import { Button, CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 // Smart contract details (replace with actual contract details)
-const doctorHandlerAddress = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"; // replace with actual address
+const doctorHandlerAddress = "0x1613beB3B2C4f22Ee086B2b38C1476A3cE7f78E8"; // replace with actual address
 const doctorHandlerAbi = [
   "function isAuthenticated(address _doctor) view external returns (bool)",
   "function authenticateDoctor(address _doctor, string memory _publicKey) external"
@@ -111,7 +111,7 @@ const [publicKey, setPublicKey] = useState(null);
 
       //parse the data into the contract
       const tx = await doctorHandlerContract.authenticateDoctor(signer.address, publicKeyPem);
-      tx.wait()
+      await tx.wait()
       
       alert("Doctor's authentication status updated!");
 
