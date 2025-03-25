@@ -9,7 +9,7 @@ This will store the CID for Web3Storage and manage the encryption keys for docto
 contract Patient {
     //owner of the contract is the patient
     address public owner;
-    string private CID; // this is where the data is stored on the IFPS
+    string[] public CID; // this is where the data is stored on the IFPS
     string public patientAES; //this is the AES key that is used to encrypt datat, it is encrypted with the patient public key
     string public patientPublicKey; //this is the 
     mapping(address => bool) public accessList; //tracks whether a doctor has been given access
@@ -41,15 +41,22 @@ contract Patient {
         return encryptedKeys[msg.sender]; 
     }
 
+    function getDoctorEncryptionKey(address doctor) external view returns (string memory) {
+        return encryptedKeys[doctor];
+    }
+
     function checkDoctorAccess(address doctor) external view returns (bool) {
         return accessList[doctor];
     }
 
-    function getCID() external view returns (string memory) {
-        require(accessList[msg.sender], "Access denied"); 
-        return CID; 
+    function addCID(string memory newCID) external {
+        CID.push(newCID);
     }
 
+    function getCIDs() external view returns (string[] memory) {
+        return CID;
+    }
+ 
     function getAES() external view returns (string memory) {
         return patientAES;
     }

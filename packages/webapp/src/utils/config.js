@@ -1,0 +1,11 @@
+import { PinataSDK } from "pinata";
+
+export const pinata = new PinataSDK({
+    pinataJwt: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIyMzY0OGJmMS1jMGFlLTRkNzktODM3MS0wNzE1MTBiNTJmYmUiLCJlbWFpbCI6ImxldW5naGFueGlAdS5udXMuZWR1IiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbl9wb2xpY3kiOnsicmVnaW9ucyI6W3siZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiRlJBMSJ9LHsiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiTllDMSJ9XSwidmVyc2lvbiI6MX0sIm1mYV9lbmFibGVkIjpmYWxzZSwic3RhdHVzIjoiQUNUSVZFIn0sImF1dGhlbnRpY2F0aW9uVHlwZSI6InNjb3BlZEtleSIsInNjb3BlZEtleUtleSI6ImMzMWVjZDEwODgyNTdjNTk4YzEyIiwic2NvcGVkS2V5U2VjcmV0IjoiNGMwOGMyNzJmMzI5ZDNjNTU4OWQ2YzkwOWJjNmI1MjFlNjNmN2VhODcxZGI2MWJjNWRiMzcwYjI3NDJiN2U0NSIsImV4cCI6MTc3MzIwMTUzMX0.pc3m8ElGRfDKIDI4tDMTcrAvJMoyta9ro-TaXLTD3as",
+    pinataGateway: "fuchsia-genetic-pelican-990.mypinata.cloud"
+});
+
+
+console.log("Config file loaded");
+console.log("PINATA_JWT:", pinata.pinataJwt);
+console.log("PINATA_GATEWAY:", pinata.pinataGateway);

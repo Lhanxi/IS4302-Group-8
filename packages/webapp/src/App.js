@@ -5,6 +5,8 @@ import RegisterPage from "./pages/RegisterPage";
 import PatientPage from "./pages/PatientPage";
 import DoctorPage from "./pages/DoctorPage";
 import RegisterDoctor from "./pages/RegisterDoctor";
+import DisplayPatientData from "./pages/DisplayPatientData";
+import UploadPatientData from "./pages/UploadPatientData";
 
 function App() {
     const [account, setAccount] = useState(null);
@@ -32,6 +34,16 @@ function App() {
                 <Route 
                     path="/registerDoctor"
                     element={<RegisterDoctor />} 
+                />
+
+                <Route
+                    path="/display/:cid"
+                    element={<DisplayPatientData />} 
+                />
+
+                <Route
+                    path="/uploadPatientData"
+                    element={<UploadPatientData />} 
                 />
             </Routes>
     );
