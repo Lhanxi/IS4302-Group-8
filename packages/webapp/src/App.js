@@ -4,6 +4,7 @@ import HomePage from "./pages/HomePage";
 import RegisterPage from "./pages/RegisterPage";
 import PatientPage from "./pages/PatientPage";
 import DoctorPage from "./pages/DoctorPage";
+import RegisterDoctor from "./pages/RegisterDoctor";
 
 function App() {
     const [account, setAccount] = useState(null);
@@ -28,6 +29,10 @@ function App() {
                     element={<DoctorPage />} 
                 />
                 
+                <Route 
+                    path="/registerDoctor"
+                    element={<RegisterDoctor />} 
+                />
             </Routes>
     );
 }

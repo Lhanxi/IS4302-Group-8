@@ -63,7 +63,6 @@ const RegisterPage = () => {
     });
   };
   
-  
 
   
   const registerPatient = async () => {

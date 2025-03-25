@@ -114,6 +114,15 @@ function HomePage({ account, setAccount, provider, setProvider }) {
                                 </Button>
                             </Link>
                         </Box>
+
+                        {/* Link to DoctorPage */}
+                        <Box textAlign="center" mt={3}>
+                            <Link to="/registerDoctor">
+                                <Button variant="contained" color="secondary" size="large">
+                                    Register as a Doctor
+                                </Button>
+                            </Link>
+                        </Box>
                     </CardContent>
                 </Card>
             </Container>
