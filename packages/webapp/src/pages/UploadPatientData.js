@@ -82,17 +82,29 @@ function UploadPatientData() {
                 setError("All fields are required.");
                 return;
             }
-
+    
+            console.log("Fields validated, proceeding to get patient contract...");
+    
             //get the patient contract and get the AES key 
             const signer = await getSigner(); 
+            console.log("Signer obtained:", signer);
+    
             const patientHandler = await new ethers.Contract(PatientHandlerAddress, patientHandlerAbi, signer);
+            console.log("Patient handler contract:", patientHandler);
+    
             const patientContractAddress = await patientHandler.getPatientContract(patientAccount);
+            console.log("Patient contract address:", patientContractAddress);
+    
             const patientContract = await new ethers.Contract(patientContractAddress, patientAbi, signer);
-
+            console.log("Patient contract:", patientContract);
+    
             //get the doctor's encrypted AES key and decrypt the AES key
             const encryptedAES = await patientContract.getDoctorEncryptionKey(await signer.getAddress());
-            const decryptedAESKey = await decryptAESKey(encryptedAES, doctorPrivateKey); 
-            
+            console.log("Encrypted AES Key:", encryptedAES);
+    
+            const decryptedAESKey = await decryptAESKey(encryptedAES, doctorPrivateKey);
+            console.log("Decrypted AES Key:", decryptedAESKey);
+    
             const patientData = {
                 name: patientName,
                 identificationNumber,
@@ -100,39 +112,42 @@ function UploadPatientData() {
                 account: patientAccount,  // Include patient account in the data
                 timestamp: new Date().toISOString(),
             };
-
+            console.log("Patient data to encrypt:", patientData);
+    
             //encrypt with the AES Key
             const encryptedPatientFile = await encryptPatientData(patientData, decryptedAESKey);
-
-            //const jsonBlob = new Blob([JSON.stringify(patientData, null, 2)], { type: "application/json" });
-            //const jsonFile = new File([jsonBlob], "patient_data.json", { type: "application/json" });
-
+            console.log("Encrypted patient file:", encryptedPatientFile);
+    
             // Log the file data to ensure it's correctly created
             console.log("File being uploaded:", encryptedPatientFile);
-
+    
             // Log the Pinata instance and methods to confirm everything is set up correctly
             console.log("Pinata instance:", pinata);
             console.log("Pinata upload method:", pinata.upload);
             console.log("File upload function exists?", typeof pinata.upload.public.file);
-
+    
             // Attempt the file upload
             const upload = await pinata.upload.public.file(encryptedPatientFile);
-
+            console.log("Pinata upload response:", upload);
+    
             if (!upload.cid) throw new Error("Failed to upload to IPFS");
-
+    
             console.log("Uploaded to IPFS:", upload.cid);
-
+    
             //Upload the data and upload the CID for the patients
             await patientContract.addCID(upload.cid);
-
+            console.log("CID uploaded to the patient contract:", upload.cid);
+    
             navigate(`/display/${upload.cid}`);
-
+            console.log("Navigation to display page with CID:", upload.cid);
+    
         } catch (error) {
             // Log detailed error information
             console.error("Upload failed:", error);
             setError("File upload failed. Please try again.");
         }
     };
+    
 
     return (
         <div>
