@@ -65,10 +65,11 @@ const RegisterPage = () => {
     });
   };
   
-  const StoreAddressForm = async (address, privateKey) => {
+  const StoreAddressForm = async (address, pin, privateKey) => {
     try {
       const response = await axios.post("http://localhost:5001/store-address", {
         address,
+        pin, 
         privateKeyP: privateKey,  // Ensure this matches the backend field
       });
       console.log("Response from backend:", response.data);
@@ -105,7 +106,7 @@ const RegisterPage = () => {
       console.log("exported AES: ", exportedKey); 
 
       //store the private key and address into the database
-      await StoreAddressForm(await signer.getAddress(), privateKeyPem);
+      await StoreAddressForm(await signer.getAddress(), pin, privateKeyPem);
 
       //generate the encryptedKey
       console.log("encrypting the key")
