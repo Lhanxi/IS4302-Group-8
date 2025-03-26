@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { generateAESKey } from './AESgenerator';
 import encryptAESKey from './EncryptAES';
 import { PatientHandlerAddress } from './contractAdress';
+import axios from 'axios';
 
 const patientHandlerAbi = [
   "function registerPatient() external",
@@ -24,6 +25,7 @@ const RegisterPage = () => {
   const [provider, setProvider] = useState(null);
   const [privateKey, setPrivateKey] = useState(null);
   const [publicKey, setPublicKey] = useState(null);
+  const [pin, setPin] = useState('');
   const navigate = useNavigate();
 
   const getSigner = async () => {
@@ -63,9 +65,20 @@ const RegisterPage = () => {
     });
   };
   
-
+  const StoreAddressForm = async (address, privateKey) => {
+    try {
+      const response = await axios.post("http://localhost:5001/store-address", {
+        address,
+        privateKeyP: privateKey,  // Ensure this matches the backend field
+      });
+      console.log("Response from backend:", response.data);
+    } catch (err) {
+      console.error("Error storing address:", err);
+    }
+  };
   
   const registerPatient = async () => {
+    console.log("pin", pin);
 
     setLoading(true);
     try {
@@ -76,8 +89,10 @@ const RegisterPage = () => {
         return;
       }
 
+      //store the user pin to the database
+
       console.log("Creating PatientHandler contract instance...");
-      const patientHandler = new ethers.Contract(PatientHandlerAddress, patientHandlerAbi, signer);
+      const patientHandler = await new ethers.Contract(PatientHandlerAddress, patientHandlerAbi, signer);
       console.log("Calling registerPatient...");
 
       const tx = await patientHandler.registerPatient();
@@ -88,6 +103,9 @@ const RegisterPage = () => {
       const { key, exportedKey } = await generateAESKey(); 
       console.log("exported AES: ", key); 
       console.log("exported AES: ", exportedKey); 
+
+      //store the private key and address into the database
+      await StoreAddressForm(await signer.getAddress(), privateKeyPem);
 
       //generate the encryptedKey
       console.log("encrypting the key")
@@ -136,8 +154,17 @@ const RegisterPage = () => {
     initAccount();
   }, []);
 
+  const handleButtonClick = () => {
+    const userPin = prompt("Please enter your PIN:");
+    setPin(userPin);
+  };
+
   return (
     <div>
+      <div>
+        <button onClick={handleButtonClick}>Enter PIN</button>
+      </div>
+
       <h2>Register as a Patient</h2>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <Button
