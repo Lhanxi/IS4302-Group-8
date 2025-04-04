@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { pinata } from "../utils/config";
-import { PatientHandlerAddress, ResearchAccessAddress } from "./contractAdress";
+import { PatientHandlerAddress, ResearchAccessAddress, ResearchAccessABI } from "./contractAdress";
 import forge from 'node-forge';
 import { ethers } from 'ethers';
 import { teal } from "@mui/material/colors";
 import encryptPatientData from "./encryptPatientData";
 import { decryptAESKey } from "./DecryptAES";
 import dataAnonymiser from "./dataAnonymiser";
+
 
 function UploadPatientData() {
     const [patientName, setPatientName] = useState("");
@@ -156,10 +157,14 @@ function UploadPatientData() {
             const anonymisedData = dataAnonymiser(patientData); 
             console.log("anonymised Data", anonymisedData); 
 
-            const publicUpload =  await pinata.upload.public.file(anonymisedData);
+            const anonymisedJson = JSON.stringify(anonymisedData); // Convert to string
+            const blob = new Blob([anonymisedJson], { type: "application/json" }); // Create a Blob
+            const file = new File([blob], "anonymised-data.json", { type: "application/json" }); // Create a File object
+
+            const publicUpload =  await pinata.upload.public.file(file);
             console.log("Pinata upload response:", publicUpload);
 
-            const researchAccessInstance = await new ethers.Contract(ResearchAccessAddress, patientHandlerAbi, signer);
+            const researchAccessInstance = await new ethers.Contract(ResearchAccessAddress, ResearchAccessABI, signer);
             await researchAccessInstance.addCID(publicUpload.cid); 
             console.log("CID uploaded to the researchaccess contract:", publicUpload.cid);
 
