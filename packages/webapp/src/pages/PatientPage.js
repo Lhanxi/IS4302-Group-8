@@ -23,6 +23,8 @@ const PatientPage = () => {
     const [selectedDoctor, setSelectedDoctor] = useState(null);
     const [pin, setPin] = useState("");
 
+    const [allowAccess, setAllowAccess] = useState(false); 
+
     const navigate = useNavigate();
 
 
@@ -40,6 +42,9 @@ const PatientPage = () => {
         "function getAES() external view returns (string memory)", 
         "function checkDoctorAccess(address doctor) external view returns (bool)", 
         "function setDoctorEncryptedAES(address doctor, string memory encryptedAES) external",
+        "function getResearchAccess() public view returns (bool)", 
+        "function setResearchAccess(bool researchAccess) external"
+
     ];
 
     const doctorHandlerAbi = [
@@ -61,11 +66,26 @@ const PatientPage = () => {
         const newProvider = new ethers.BrowserProvider(ethereum);
         await newProvider.send("eth_requestAccounts", []);
         const signer = await newProvider.getSigner();
-        setSigner(signer);
+        await setSigner(signer);
 
         console.log("Provider and Signer initialized.");
         return { provider: newProvider, signer };
     };
+
+    const handleAccessToggle = async() => {
+        console.log("handle toggle inital state", allowAccess); 
+        console.log("handle toggle patient contract", patientContract);
+        const initialAccess = await patientContract.getResearchAccess(); 
+        console.log("initial access", initialAccess); 
+
+        if (initialAccess) {
+            await patientContract.setResearchAccess(false); 
+        } else {
+            await patientContract.setResearchAccess(true); 
+        }
+        const result = await patientContract.getResearchAccess(); 
+        console.log("after toggle", result);
+    }
 
     useEffect(() => {
         const init = async () => {
@@ -117,6 +137,10 @@ const PatientPage = () => {
                 const patientContractInstance = new ethers.Contract(patientAddress, patientAbi, signer);
                 setPatientContract(patientContractInstance);
                 console.log("Patient contract initialized:", patientContractInstance);
+                
+                const patientInitialAccess = patientContractInstance.getResearchAccess(); 
+                await setAllowAccess(patientInitialAccess); 
+                console.log("patient intial access", patientInitialAccess);
 
                 console.log("Fetching pending doctor requests...");
                 const doctorsList = await fetchPendingDoctors(patientHandlerContractInstance, accounts[0], signer);
@@ -260,6 +284,11 @@ const PatientPage = () => {
 
     return (
         <div>
+            <h1>Currently you allow research access {allowAccess}</h1>
+             <button onClick={handleAccessToggle}>
+                Toggle Research Access
+            </button>
+
             {!isRegistered ? (
                 <div>
                     <h2>You are not registered yet.</h2>

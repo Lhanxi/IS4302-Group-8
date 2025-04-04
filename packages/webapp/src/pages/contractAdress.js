@@ -1,5 +1,5 @@
-const PatientHandlerAddress = "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853"; 
+const PatientHandlerAddress = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"; 
 const PatientAddress = "0x9bd03768a7DCc129555dE410FF8E85528A4F88b5";
-const DoctorHandlerAddress = "0x610178dA211FEF7D417bC0e6FeD39F05609AD788";
+const DoctorHandlerAddress = "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1";
 
 export { PatientAddress, PatientHandlerAddress, DoctorHandlerAddress};
