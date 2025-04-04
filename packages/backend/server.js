@@ -45,31 +45,38 @@ app.get("/fetch-ipfs", async (req, res) => {
 
 // Route to store address and private key in MongoDB
 app.post('/store-address', async (req, res) => {
-    const { address, pin, privateKeyP } = req.body;
-    console.log("hi");
-  
-    if (!address || !privateKeyP ) {
-      return res.status(400).send("Address and private key are required.");
+  const { address, pin, privateKeyP } = req.body;
+  console.log("hi");
+  console.log("pin", pin);
+
+  if (!address || !privateKeyP) {
+    return res.status(400).send("Address and private key are required.");
+  }
+
+  try {
+    const collection = db.collection('keys');
+    
+    // Check if the address already exists
+    const existingUser = await collection.findOne({ address });
+
+    if (!existingUser) {
+      // Insert new record
+      await collection.insertOne({ address, pin, privateKeyP });
+      res.status(201).send("Address and private key stored successfully.");
+    } else {
+      // Update existing record
+      await collection.updateOne(
+        { address },
+        { $set: { pin, privateKeyP } }
+      );
+      res.status(200).send("Address already exists. Private key and pin updated.");
     }
-  
-    try {
-      const collection = db.collection('keys');
-      
-      // Check if the address already exists
-      const existingUser = await collection.findOne({ address });
-  
-      if (!existingUser) {
-        // Store address and private key (not recommended in production)
-        await collection.insertOne({ address, pin, privateKeyP });
-        res.status(201).send("Address and private key stored successfully.");
-      } else {
-        res.status(200).send("Address already exists.");
-      }
-    } catch (err) {
-      console.error("Error storing address and private key in MongoDB:", err);
-      res.status(500).send("Error storing address.");
-    }
-  });
+  } catch (err) {
+    console.error("Error storing/updating address and private key in MongoDB:", err);
+    res.status(500).send("Error storing address.");
+  }
+});
+
 
   app.get('/get-private-key/:address/:pin', async (req, res) => {
     try {
