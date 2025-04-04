@@ -11,6 +11,7 @@ contract ConnectWalletTest {
     }
 
     function connectWalletTest() public {
+        require(msg.sender != address(0), "Invalid sender address");
         emit WalletConnected(msg.sender);
     }
 }

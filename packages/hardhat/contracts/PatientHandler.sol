@@ -17,6 +17,7 @@ contract PatientHandler {
     event AccessRequested(address indexed patient, address indexed doctor);
 
     function registerPatient() external {
+        require(msg.sender != address(0), "Invalid sender address");
         require(patientContracts[msg.sender] == address(0), "Patient already registered");
 
         Patient patientContract = new Patient(msg.sender);
@@ -26,10 +27,11 @@ contract PatientHandler {
         patientContracts[msg.sender] = deployedAddress;
 
         emit PatientRegistered(msg.sender, deployedAddress);
-}
-
+    }
 
     function requestAccess(address patient) external {
+        require(msg.sender != address(0), "Invalid sender address");
+        require(patient != address(0), "Invalid patient address");
         require(patientContracts[patient] != address(0), "Patient is not registered");
         require(!accessRequests[patient][msg.sender], "Access request already sent");
 
@@ -45,16 +47,26 @@ contract PatientHandler {
     }
 
     function setPatientPublicKey(string memory publicKey) public {
+        require(msg.sender != address(0), "Invalid sender address");
+        require(bytes(publicKey).length > 0, "Public key cannot be empty");
+        require(patientContracts[msg.sender] != address(0), "Patient not registered");
+        
+        patientPublicKeys[msg.sender] = publicKey;
+        
+        // Update the patient's contract with the public key
+        address patientContract = patientContracts[msg.sender];
+        Patient patientContractInstance = Patient(patientContract);
+        patientContractInstance.setPatientPublicKey(publicKey);
     }
-    //grant access
-
-    //emit an event for read and writing of data 
 
     function getPendingRequestForPatient(address patient) public view returns (address[] memory) {
+        require(patient != address(0), "Invalid patient address");
+        require(patientContracts[patient] != address(0), "Patient not registered");
         return pendingDoctors[patient]; // Return list of doctors who requested access
     }
 
     function getPatientContract(address patient) public view returns (address) {
+        require(patient != address(0), "Invalid patient address");
         return patientContracts[patient];
     }
 }

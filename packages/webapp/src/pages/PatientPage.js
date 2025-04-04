@@ -1,308 +1,423 @@
-import React, { useState, useEffect } from 'react';
-import { ethers } from 'ethers';
-import { PatientAddress, PatientHandlerAddress, DoctorHandlerAddress  } from './contractAdress';
-import encryptAESKey from './EncryptAES';
-import { decryptAESKey } from './DecryptAES';
-import axios from 'axios';
+import { Button } from "@mui/material";
+import axios from "axios";
+import { ethers } from "ethers";
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { DoctorHandlerAddress, PatientHandlerAddress } from "./contractAdress";
+import { decryptAESKey } from "./DecryptAES";
+import encryptAESKey from "./EncryptAES";
 
 const PatientPage = () => {
-    const [doctors, setDoctors] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [patientHandlerContract, setPatientHandlerContract] = useState(null);
-    const [patientContract, setPatientContract] = useState(null);
-    const [currentAccount, setCurrentAccount] = useState(null);
-    const [isRegistered, setIsRegistered] = useState(false);
-    const [error, setError] = useState(null);
-    const [requestSigner, setSigner] = useState(null);
+  const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [patientHandlerContract, setPatientHandlerContract] = useState(null);
+  const [patientContract, setPatientContract] = useState(null);
+  const [currentAccount, setCurrentAccount] = useState(null);
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [error, setError] = useState(null);
+  const [requestSigner, setSigner] = useState(null);
 
-    // State for private key input
-    const [showPrivateKeyForm, setShowPrivateKeyForm] = useState(false);
-    const [privateKey, setPrivateKey] = useState("");
-    const [selectedDoctor, setSelectedDoctor] = useState(null);
-    const [pin, setPin] = useState("");
+  // State for private key input
+  const [showPrivateKeyForm, setShowPrivateKeyForm] = useState(false);
+  const [privateKey, setPrivateKey] = useState("");
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [pin, setPin] = useState("");
 
-    const patientHandlerAbi = [
-      "function getPendingRequestForPatient(address patient) public view returns (address[] memory)",
-      "function registerPatient() external",
-      "function accessRequests(address patient, address doctor) public view returns (bool)",
-      "function getPatientContract(address patient) public view returns (address)",
+  const patientHandlerAbi = [
+    "function getPendingRequestForPatient(address patient) public view returns (address[] memory)",
+    "function registerPatient() external",
+    "function accessRequests(address patient, address doctor) public view returns (bool)",
+    "function getPatientContract(address patient) public view returns (address)",
   ];
-    const patientAbi = [
-        "function accessRequests(address doctor) external view returns (bool)",
-        "function accessList(address doctor) external view returns (bool)",
-        "function revokeAccess(address doctor) external",
-        "function grantAccess(address doctor, string memory encryptedKey) external", 
-        "function getAES() external view returns (string memory)", 
-        "function checkDoctorAccess(address doctor) external view returns (bool)", 
-        "function setDoctorEncryptedAES(address doctor, string memory encryptedAES) external",
-    ];
+  const patientAbi = [
+    "function accessRequests(address doctor) external view returns (bool)",
+    "function accessList(address doctor) external view returns (bool)",
+    "function revokeAccess(address doctor) external",
+    "function grantAccess(address doctor, string memory encryptedKey) external",
+    "function getAES() external view returns (string memory)",
+    "function checkDoctorAccess(address doctor) external view returns (bool)",
+    "function setDoctorEncryptedAES(address doctor, string memory encryptedAES) external",
+  ];
 
-    const doctorHandlerAbi = [
-        "function getDoctorContractAddress(address _doctor) view public returns (address)",
-    ]; 
+  const doctorHandlerAbi = [
+    "function getDoctorContractAddress(address _doctor) view public returns (address)",
+  ];
 
-    const doctorAbi = [
-        "function getPublicKey() public view returns (string memory)",
-    ]
+  const doctorAbi = [
+    "function getPublicKey() public view returns (string memory)",
+  ];
 
-    const getProviderAndSigner = async () => {
-        if (!window.ethereum) {
-            alert("Please install MetaMask!");
-            return null;
-        }
+  const getProviderAndSigner = async () => {
+    if (!window.ethereum) {
+      alert("Please install MetaMask!");
+      return null;
+    }
 
-        console.log("Initializing provider and signer...");
+    console.log("Initializing provider and signer...");
+    const { ethereum } = window;
+    const newProvider = new ethers.BrowserProvider(ethereum);
+    await newProvider.send("eth_requestAccounts", []);
+    const signer = await newProvider.getSigner();
+    setSigner(signer);
+
+    console.log("Provider and Signer initialized.");
+    return { provider: newProvider, signer };
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        console.log("Starting initialization...");
+        setError(null);
+
         const { ethereum } = window;
-        const newProvider = new ethers.BrowserProvider(ethereum);
-        await newProvider.send("eth_requestAccounts", []);
-        const signer = await newProvider.getSigner();
-        setSigner(signer);
+        if (!ethereum) {
+          alert("Please install MetaMask!");
+          return;
+        }
 
-        console.log("Provider and Signer initialized.");
-        return { provider: newProvider, signer };
-    };
+        const { provider, signer } = await getProviderAndSigner();
+        if (!provider || !signer) return;
 
-    useEffect(() => {
-        const init = async () => {
-            try {
-                console.log("Starting initialization...");
-                setError(null);
+        const accounts = await ethereum.request({
+          method: "eth_requestAccounts",
+        });
+        await setCurrentAccount(accounts[0]);
+        console.log("Current account:", accounts[0]);
 
-                const { ethereum } = window;
-                if (!ethereum) {
-                    alert("Please install MetaMask!");
-                    return;
-                }
+        const patientHandlerContractInstance = new ethers.Contract(
+          PatientHandlerAddress,
+          patientHandlerAbi,
+          signer
+        );
+        await setPatientHandlerContract(patientHandlerContractInstance);
+        console.log(
+          "PatientHandler contract initialized:",
+          patientHandlerContractInstance
+        );
 
-                const { provider, signer } = await getProviderAndSigner();
-                if (!provider || !signer) return;
-
-                const accounts = await ethereum.request({ method: "eth_requestAccounts" });
-                await setCurrentAccount(accounts[0]);
-                console.log("Current account:", accounts[0]);
-
-                const patientHandlerContractInstance = new ethers.Contract(PatientHandlerAddress, patientHandlerAbi, signer);
-                await setPatientHandlerContract(patientHandlerContractInstance);
-                console.log("PatientHandler contract initialized:", patientHandlerContractInstance);
-
-                console.log("Fetching patient contract for account:", accounts[0]);
-                let patientAddress;
-                try {
-                    patientAddress = await patientHandlerContractInstance.getPatientContract(accounts[0]);
-                    console.log("Fetched patient contract address:", patientAddress);
-                } catch (err) {
-                    console.error("Error fetching patient contract:", err);
-                    setError("Failed to fetch patient contract. Please try again.");
-                    setLoading(false);
-                    return;
-                }
-
-                if (patientAddress === "0x0000000000000000000000000000000000000000") {
-                    console.log("User is NOT registered.");
-                    setIsRegistered(false);
-                    setLoading(false);
-                    return;
-                }
-
-                console.log("User is registered.");
-                setIsRegistered(true);
-
-                console.log("Initializing patient contract...");
-                const patientContractInstance = new ethers.Contract(patientAddress, patientAbi, signer);
-                setPatientContract(patientContractInstance);
-                console.log("Patient contract initialized:", patientContractInstance);
-
-                console.log("Fetching pending doctor requests...");
-                const doctorsList = await fetchPendingDoctors(patientHandlerContractInstance, accounts[0], signer);
-                console.log("Fetched pending doctors:", doctorsList);
-                setDoctors(doctorsList);
-                setLoading(false);
-            } catch (err) {
-                console.error("Initialization error:", err);
-                setError("Something went wrong. Please refresh the page or check your network.");
-                setLoading(false);
-            }
-        };
-
-        init();
-    }, []);
-
-    const fetchPendingDoctors = async (patientHandlerContract, patientAddress, signer) => {
+        console.log("Fetching patient contract for account:", accounts[0]);
+        let patientAddress;
         try {
-            console.log("Fetching pending doctor requests for patient:", patientAddress);
-            const pendingDoctors = await patientHandlerContract.getPendingRequestForPatient(patientAddress);
-            console.log("Pending doctors retrieved:", pendingDoctors);
-
-            console.log("Fetching patient contract address...");
-            const patientContractAddress = await patientHandlerContract.getPatientContract(await signer.getAddress());
-            console.log("Patient contract address:", patientContractAddress);
-            
-            console.log("Creating Patient contract instance...");
-            const patientContract = new ethers.Contract(patientContractAddress, patientAbi, signer);
-
-
-            const doctorsList = [];
-            for (let address of pendingDoctors) {
-                console.log("Checking access status for doctor:", address);
-                
-                const isApproved = await patientContract.checkDoctorAccess(address);
-                console.log(`Doctor: ${address}, Approved: ${isApproved}`);
-
-                doctorsList.push({
-                    id: address,
-                    doctor: address,
-                    access: isApproved ? "Approved" : "Not Approved",
-                });
-            }
-            return doctorsList;
+          patientAddress =
+            await patientHandlerContractInstance.getPatientContract(
+              accounts[0]
+            );
+          console.log("Fetched patient contract address:", patientAddress);
         } catch (err) {
-            console.error("Error fetching pending doctors:", err);
-            return [];
+          console.error("Error fetching patient contract:", err);
+          setError("Failed to fetch patient contract. Please try again.");
+          setLoading(false);
+          return;
         }
+
+        if (patientAddress === "0x0000000000000000000000000000000000000000") {
+          console.log("User is NOT registered.");
+          setIsRegistered(false);
+          setLoading(false);
+          return;
+        }
+
+        console.log("User is registered.");
+        setIsRegistered(true);
+
+        console.log("Initializing patient contract...");
+        const patientContractInstance = new ethers.Contract(
+          patientAddress,
+          patientAbi,
+          signer
+        );
+        setPatientContract(patientContractInstance);
+        console.log("Patient contract initialized:", patientContractInstance);
+
+        console.log("Fetching pending doctor requests...");
+        const doctorsList = await fetchPendingDoctors(
+          patientHandlerContractInstance,
+          accounts[0],
+          signer
+        );
+        console.log("Fetched pending doctors:", doctorsList);
+        setDoctors(doctorsList);
+        setLoading(false);
+      } catch (err) {
+        console.error("Initialization error:", err);
+        setError(
+          "Something went wrong. Please refresh the page or check your network."
+        );
+        setLoading(false);
+      }
     };
 
-    const handleGrantAccessClick = (doctor) => {
-        setSelectedDoctor(doctor);
-        setShowPrivateKeyForm(true); // Show form when button is clicked
-    };
+    init();
+  }, []);
 
-    const getPrivateKey = async (ad, pin) => {
-        try {
-            const response = await axios.get(`http://localhost:5001/get-private-key/${ad}/${pin}`);
-            const privKey = response.data.privateKey;
-            console.log(privKey);
-            setPrivateKey(privKey); // Assuming setPrivateKey is a function to set the state
-            return privKey; // Returning the privateKey
-        } catch (error) {
-            console.error("Error fetching private key:", error);
-            throw error; // Optionally throw error if needed
-        }
-    };    
+  const fetchPendingDoctors = async (
+    patientHandlerContract,
+    patientAddress,
+    signer
+  ) => {
+    try {
+      console.log(
+        "Fetching pending doctor requests for patient:",
+        patientAddress
+      );
+      const pendingDoctors =
+        await patientHandlerContract.getPendingRequestForPatient(
+          patientAddress
+        );
+      console.log("Pending doctors retrieved:", pendingDoctors);
 
-    const handleGrantAccess = async () => {
-        if (!pin) {
-            alert("Please enter your pin!");
-            return;
-        }
-    
-        try {
-            console.log("Patient Contract:", patientContract);
+      console.log("Fetching patient contract address...");
+      const patientContractAddress =
+        await patientHandlerContract.getPatientContract(
+          await signer.getAddress()
+        );
+      console.log("Patient contract address:", patientContractAddress);
 
-            const encryptedAES = await patientContract.getAES();
-            console.log("AES: ", encryptedAES);
+      console.log("Creating Patient contract instance...");
+      const patientContract = new ethers.Contract(
+        patientContractAddress,
+        patientAbi,
+        signer
+      );
 
-            const ad = await requestSigner.getAddress(); 
-            console.log("ad", ad); 
-            const privKey = await getPrivateKey(ad, pin);
-            console.log(privKey);
-            const decryptedAES = await decryptAESKey(encryptedAES, privKey);
-            console.log("Decrypted AES Key:", decryptedAES);
-    
-            // Encrypt the AES again and first get the doctor public key
-            const doctorHandler = await new ethers.Contract(DoctorHandlerAddress, doctorHandlerAbi, requestSigner);
-            console.log("Doctor Handler:", doctorHandler);
-    
-            const doctorAddress = await doctorHandler.getDoctorContractAddress(selectedDoctor);
-            console.log("Doctor Contract Address:", doctorAddress);
-    
-            const doctorContract = await new ethers.Contract(doctorAddress, doctorAbi, requestSigner); 
-            console.log("Doctor Contract:", doctorContract);
-    
-            const doctorPublicKey = await doctorContract.getPublicKey(); 
-            console.log("Doctor Public Key:", doctorPublicKey);
-    
-            const doctorEncryptedAES = await encryptAESKey(decryptedAES, doctorPublicKey);
-            console.log("Encrypted AES Key for Doctor:", doctorEncryptedAES);
-    
-            await patientContract.setDoctorEncryptedAES(selectedDoctor, doctorEncryptedAES);
-            console.log("Doctor's Encrypted AES Key set in the contract.");
-    
-            // Call the contract function to grant access
-            const tx = await patientContract.grantAccess(selectedDoctor, doctorEncryptedAES);
-            console.log("Transaction for granting access:", tx);
-    
-            await tx.wait(); // Wait for the transaction to be confirmed
-            console.log("Access granted to doctor:", selectedDoctor);
-    
-            // Now check if access is granted
-            const app = await patientContract.checkDoctorAccess(selectedDoctor);
-            console.log("Doctor post approve:", app);
-    
-            // Update UI
-            setDoctors(doctors.map(doc => doc.doctor === selectedDoctor ? { ...doc, access: "Approved" } : doc));
-            console.log("Doctors updated with approval status.");
-    
-        } catch (err) {
-            console.error("Grant access error:", err);
-            setError("Failed to grant access. Please try again.");
-        }
-    
-        // Close the form
-        setShowPrivateKeyForm(false);
-        setPrivateKey("");
-        console.log("Private key form closed.");
-    };
-    
+      const doctorsList = [];
+      for (let address of pendingDoctors) {
+        console.log("Checking access status for doctor:", address);
 
+        const isApproved = await patientContract.checkDoctorAccess(address);
+        console.log(`Doctor: ${address}, Approved: ${isApproved}`);
 
-    const handleRevokeAccess = async (doctor) => {
-    };
+        doctorsList.push({
+          id: address,
+          doctor: address,
+          access: isApproved ? "Approved" : "Not Approved",
+        });
+      }
+      return doctorsList;
+    } catch (err) {
+      console.error("Error fetching pending doctors:", err);
+      return [];
+    }
+  };
 
-    if (loading) return <div>Loading...</div>;
-    if (error) return <div style={{ color: 'red' }}>{error}</div>;
+  const handleGrantAccessClick = (doctor) => {
+    setSelectedDoctor(doctor);
+    setShowPrivateKeyForm(true); // Show form when button is clicked
+  };
 
-    return (
+  const getPrivateKey = async (ad, pin) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:5001/get-private-key/${ad}/${pin}`
+      );
+      const privKey = response.data.privateKey;
+      console.log(privKey);
+      setPrivateKey(privKey); // Assuming setPrivateKey is a function to set the state
+      return privKey; // Returning the privateKey
+    } catch (error) {
+      console.error("Error fetching private key:", error);
+      throw error; // Optionally throw error if needed
+    }
+  };
+
+  const handleGrantAccess = async () => {
+    if (!pin) {
+      alert("Please enter your pin!");
+      return;
+    }
+
+    try {
+      console.log("Patient Contract:", patientContract);
+
+      const encryptedAES = await patientContract.getAES();
+      console.log("AES: ", encryptedAES);
+
+      const ad = await requestSigner.getAddress();
+      console.log("ad", ad);
+      const privKey = await getPrivateKey(ad, pin);
+      console.log(privKey);
+      const decryptedAES = await decryptAESKey(encryptedAES, privKey);
+      console.log("Decrypted AES Key:", decryptedAES);
+
+      // Encrypt the AES again and first get the doctor public key
+      const doctorHandler = await new ethers.Contract(
+        DoctorHandlerAddress,
+        doctorHandlerAbi,
+        requestSigner
+      );
+      console.log("Doctor Handler:", doctorHandler);
+
+      const doctorAddress = await doctorHandler.getDoctorContractAddress(
+        selectedDoctor
+      );
+      console.log("Doctor Contract Address:", doctorAddress);
+
+      const doctorContract = await new ethers.Contract(
+        doctorAddress,
+        doctorAbi,
+        requestSigner
+      );
+      console.log("Doctor Contract:", doctorContract);
+
+      const doctorPublicKey = await doctorContract.getPublicKey();
+      console.log("Doctor Public Key:", doctorPublicKey);
+
+      const doctorEncryptedAES = await encryptAESKey(
+        decryptedAES,
+        doctorPublicKey
+      );
+      console.log("Encrypted AES Key for Doctor:", doctorEncryptedAES);
+
+      await patientContract.setDoctorEncryptedAES(
+        selectedDoctor,
+        doctorEncryptedAES
+      );
+      console.log("Doctor's Encrypted AES Key set in the contract.");
+
+      // Call the contract function to grant access
+      const tx = await patientContract.grantAccess(
+        selectedDoctor,
+        doctorEncryptedAES
+      );
+      console.log("Transaction for granting access:", tx);
+
+      await tx.wait(); // Wait for the transaction to be confirmed
+      console.log("Access granted to doctor:", selectedDoctor);
+
+      // Now check if access is granted
+      const app = await patientContract.checkDoctorAccess(selectedDoctor);
+      console.log("Doctor post approve:", app);
+
+      // Update UI
+      setDoctors(
+        doctors.map((doc) =>
+          doc.doctor === selectedDoctor ? { ...doc, access: "Approved" } : doc
+        )
+      );
+      console.log("Doctors updated with approval status.");
+    } catch (err) {
+      console.error("Grant access error:", err);
+      setError("Failed to grant access. Please try again.");
+    }
+
+    // Close the form
+    setShowPrivateKeyForm(false);
+    setPrivateKey("");
+    console.log("Private key form closed.");
+  };
+
+  const handleRevokeAccess = async (doctor) => {};
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div style={{ color: "red" }}>{error}</div>;
+
+  return (
+    <div>
+      {!isRegistered ? (
         <div>
-            {!isRegistered ? (
-                <div>
-                    <h2>You are not registered yet.</h2>
-                </div>
-            ) : (
-                <>
-                    <table border="1" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead>
-                            <tr>
-                                <th>Doctor Address</th>
-                                <th>Access</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {doctors.map((doctor) => (
-                                <tr key={doctor.id}>
-                                    <td>{doctor.doctor}</td>
-                                    <td>{doctor.access}</td>
-                                    <td>
-                                        <button onClick={() => handleGrantAccessClick(doctor.doctor)}>Grant Access</button>
-                                        <button onClick={() => handleRevokeAccess(doctor.doctor)}>Revoke Access</button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-
-                    {/* Private Key Input Form (Modal) */}
-                    {showPrivateKeyForm && (
-                    <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px' }}>
-                            <h3>Enter Your PIN</h3>
-                            <input
-                                type="password"
-                                value={pin} // This should be bound to the pin state
-                                onChange={(e) => setPin(e.target.value)} // This updates the pin state
-                                placeholder="Enter your PIN" // Update placeholder to match PIN
-                                style={{ width: '100%', padding: '10px', marginBottom: '10px' }}
-                            />
-                            <button onClick={handleGrantAccess} style={{ marginRight: '10px' }}>Submit</button>
-                            <button onClick={() => setShowPrivateKeyForm(false)}>Cancel</button>
-                        </div>
-                    </div>
-                )}
-
-                </>
-            )}
+          <h2>You are not registered yet.</h2>
         </div>
-    );
+      ) : (
+        <>
+          <div style={{ marginBottom: "20px" }}>
+            <Link to="/patient-records" style={{ textDecoration: "none" }}>
+              <Button
+                variant="contained"
+                color="primary"
+                sx={{
+                  backgroundColor: "#00bcd4",
+                  "&:hover": {
+                    backgroundColor: "#008ba3",
+                  },
+                }}
+              >
+                View Your Medical Records
+              </Button>
+            </Link>
+          </div>
+
+          <table
+            border="1"
+            style={{ width: "100%", borderCollapse: "collapse" }}
+          >
+            <thead>
+              <tr>
+                <th>Doctor Address</th>
+                <th>Access</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {doctors.map((doctor) => (
+                <tr key={doctor.id}>
+                  <td>{doctor.doctor}</td>
+                  <td>{doctor.access}</td>
+                  <td>
+                    <button
+                      onClick={() => handleGrantAccessClick(doctor.doctor)}
+                    >
+                      Grant Access
+                    </button>
+                    <button onClick={() => handleRevokeAccess(doctor.doctor)}>
+                      Revoke Access
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Private Key Input Form (Modal) */}
+          {showPrivateKeyForm && (
+            <div
+              style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <div
+                style={{
+                  backgroundColor: "white",
+                  padding: "20px",
+                  borderRadius: "10px",
+                }}
+              >
+                <h3>Enter Your PIN</h3>
+                <input
+                  type="password"
+                  value={pin} // This should be bound to the pin state
+                  onChange={(e) => setPin(e.target.value)} // This updates the pin state
+                  placeholder="Enter your PIN" // Update placeholder to match PIN
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    marginBottom: "10px",
+                  }}
+                />
+                <button
+                  onClick={handleGrantAccess}
+                  style={{ marginRight: "10px" }}
+                >
+                  Submit
+                </button>
+                <button onClick={() => setShowPrivateKeyForm(false)}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
 };
 
 export default PatientPage;

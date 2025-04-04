@@ -5,6 +5,7 @@ contract Doctor {
     string private publicKey;
 
     constructor(string memory _publicKey) {
+        require(bytes(_publicKey).length > 0, "Public key cannot be empty");
         publicKey = _publicKey;
     }
 
