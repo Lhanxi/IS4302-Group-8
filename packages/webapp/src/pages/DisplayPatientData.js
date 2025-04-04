@@ -171,6 +171,8 @@ useEffect(() => {
                         <div key={idx} style={{ border: "1px solid #ccc", marginBottom: "1rem", padding: "1rem" }}>
                             <p><strong>Name:</strong> {record.name}</p>
                             <p><strong>ID:</strong> {record.identificationNumber}</p>
+                            <p><strong>Gender:</strong> {record?.gender || ""}</p>
+                            <p><strong>Age:</strong> {record?.age || ""}</p>
                             <p><strong>Health:</strong> {record.healthRecords}</p>
                             <p><strong>Timestamp:</strong> {record.timestamp}</p>
                         </div>

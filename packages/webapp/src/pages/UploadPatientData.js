@@ -11,6 +11,8 @@ import { decryptAESKey } from "./DecryptAES";
 function UploadPatientData() {
     const [patientName, setPatientName] = useState("");
     const [identificationNumber, setIdentificationNumber] = useState("");
+    const [gender, setGender] = useState("");
+    const [age, setAge] = useState("");
     const [healthRecords, setHealthRecords] = useState("");
     const [patientAccount, setPatientAccount] = useState("");  // New state for patient account
     const [doctorPrivateKey, setDoctorPrivateKey] = useState(""); // New state for doctor private key
@@ -115,6 +117,8 @@ function UploadPatientData() {
                 name: patientName,
                 identificationNumber,
                 healthRecords,
+                gender,
+                age,
                 account: patientAccount,  // Include patient account in the data
                 timestamp: new Date().toISOString(),
             };
@@ -184,6 +188,12 @@ function UploadPatientData() {
 
             <label>Identification Number:</label>
             <input type="text" value={identificationNumber} onChange={(e) => setIdentificationNumber(e.target.value)} />
+
+            <label>Gender:</label>
+            <input type="text" value={gender} onChange={(e) => setGender(e.target.value)} />
+
+            <label>Age:</label>
+            <input type="text" value={age} onChange={(e) => setAge(e.target.value)} />
 
             <label>Health Records:</label>
             <textarea value={healthRecords} onChange={(e) => setHealthRecords(e.target.value)} />
