@@ -144,8 +144,8 @@ function UploadPatientData() {
             await patientContract.addCID(upload.cid);
             console.log("CID uploaded to the patient contract:", upload.cid);
     
-            navigate(`/display/${upload.cid}`);
-            console.log("Navigation to display page with CID:", upload.cid);
+            //navigate(`/display/${upload.cid}`);
+            //console.log("Navigation to display page with CID:", upload.cid);
     
         } catch (error) {
             // Log detailed error information

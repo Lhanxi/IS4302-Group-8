@@ -38,7 +38,7 @@ function App() {
                 />
 
                 <Route
-                    path="/display/:cid"
+                    path="/display"
                     element={<DisplayPatientData />} 
                 />
 
