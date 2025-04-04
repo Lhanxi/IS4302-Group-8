@@ -138,7 +138,7 @@ const PatientPage = () => {
                 setPatientContract(patientContractInstance);
                 console.log("Patient contract initialized:", patientContractInstance);
                 
-                const patientInitialAccess = patientContractInstance.getResearchAccess(); 
+                const patientInitialAccess = await patientContractInstance.getResearchAccess(); 
                 await setAllowAccess(patientInitialAccess); 
                 console.log("patient intial access", patientInitialAccess);
 
@@ -284,7 +284,10 @@ const PatientPage = () => {
 
     return (
         <div>
-            <h1>Currently you allow research access {allowAccess}</h1>
+            {allowAccess !== null && (
+                <h1>Currently you allow research access: {allowAccess.toString()}</h1>
+                )}
+
              <button onClick={handleAccessToggle}>
                 Toggle Research Access
             </button>
