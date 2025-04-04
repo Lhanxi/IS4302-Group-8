@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import { PatientAddress, PatientHandlerAddress, DoctorHandlerAddress  } from './contractAdress';
 import encryptAESKey from './EncryptAES';
 import { decryptAESKey } from './DecryptAES';
+import axios from 'axios';
 
 const PatientPage = () => {
     const [doctors, setDoctors] = useState([]);
@@ -18,6 +19,7 @@ const PatientPage = () => {
     const [showPrivateKeyForm, setShowPrivateKeyForm] = useState(false);
     const [privateKey, setPrivateKey] = useState("");
     const [selectedDoctor, setSelectedDoctor] = useState(null);
+    const [pin, setPin] = useState("");
 
     const patientHandlerAbi = [
       "function getPendingRequestForPatient(address patient) public view returns (address[] memory)",
@@ -164,9 +166,22 @@ const PatientPage = () => {
         setShowPrivateKeyForm(true); // Show form when button is clicked
     };
 
+    const getPrivateKey = async (ad, pin) => {
+        try {
+            const response = await axios.get(`http://localhost:5001/get-private-key/${ad}/${pin}`);
+            const privKey = response.data.privateKey;
+            console.log(privKey);
+            setPrivateKey(privKey); // Assuming setPrivateKey is a function to set the state
+            return privKey; // Returning the privateKey
+        } catch (error) {
+            console.error("Error fetching private key:", error);
+            throw error; // Optionally throw error if needed
+        }
+    };    
+
     const handleGrantAccess = async () => {
-        if (!privateKey) {
-            alert("Please enter your private key!");
+        if (!pin) {
+            alert("Please enter your pin!");
             return;
         }
     
@@ -175,7 +190,12 @@ const PatientPage = () => {
 
             const encryptedAES = await patientContract.getAES();
             console.log("AES: ", encryptedAES);
-            const decryptedAES = await decryptAESKey(encryptedAES, privateKey);
+
+            const ad = await requestSigner.getAddress(); 
+            console.log("ad", ad); 
+            const privKey = await getPrivateKey(ad, pin);
+            console.log(privKey);
+            const decryptedAES = await decryptAESKey(encryptedAES, privKey);
             console.log("Decrypted AES Key:", decryptedAES);
     
             // Encrypt the AES again and first get the doctor public key
@@ -226,6 +246,7 @@ const PatientPage = () => {
 
 
     const handleRevokeAccess = async (doctor) => {
+        await patientContract.revokeAccess(doctor);
     };
 
     if (loading) return <div>Loading...</div>;
@@ -263,21 +284,22 @@ const PatientPage = () => {
 
                     {/* Private Key Input Form (Modal) */}
                     {showPrivateKeyForm && (
-                        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px' }}>
-                                <h3>Enter Your Private Key</h3>
-                                <input
-                                    type="password"
-                                    value={privateKey}
-                                    onChange={(e) => setPrivateKey(e.target.value)}
-                                    placeholder="Private Key"
-                                    style={{ width: '100%', padding: '10px', marginBottom: '10px' }}
-                                />
-                                <button onClick={handleGrantAccess} style={{ marginRight: '10px' }}>Submit</button>
-                                <button onClick={() => setShowPrivateKeyForm(false)}>Cancel</button>
-                            </div>
+                    <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px' }}>
+                            <h3>Enter Your PIN</h3>
+                            <input
+                                type="password"
+                                value={pin} // This should be bound to the pin state
+                                onChange={(e) => setPin(e.target.value)} // This updates the pin state
+                                placeholder="Enter your PIN" // Update placeholder to match PIN
+                                style={{ width: '100%', padding: '10px', marginBottom: '10px' }}
+                            />
+                            <button onClick={handleGrantAccess} style={{ marginRight: '10px' }}>Submit</button>
+                            <button onClick={() => setShowPrivateKeyForm(false)}>Cancel</button>
                         </div>
-                    )}
+                    </div>
+                )}
+
                 </>
             )}
         </div>

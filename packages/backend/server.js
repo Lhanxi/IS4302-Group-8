@@ -45,7 +45,7 @@ app.get("/fetch-ipfs", async (req, res) => {
 
 // Route to store address and private key in MongoDB
 app.post('/store-address', async (req, res) => {
-    const { address, privateKeyP } = req.body;
+    const { address, pin, privateKeyP } = req.body;
     console.log("hi");
   
     if (!address || !privateKeyP ) {
@@ -60,7 +60,7 @@ app.post('/store-address', async (req, res) => {
   
       if (!existingUser) {
         // Store address and private key (not recommended in production)
-        await collection.insertOne({ address, privateKeyP });
+        await collection.insertOne({ address, pin, privateKeyP });
         res.status(201).send("Address and private key stored successfully.");
       } else {
         res.status(200).send("Address already exists.");
@@ -70,5 +70,44 @@ app.post('/store-address', async (req, res) => {
       res.status(500).send("Error storing address.");
     }
   });
+
+  app.get('/get-private-key/:address/:pin', async (req, res) => {
+    try {
+        console.log("test");
+        const { address, pin } = req.params;
+        
+        if (!address || !pin) {
+            return res.status(400).json({ error: "Address and PIN are required." });
+        }
+
+        const collection = db.collection('keys');
+
+        // Find the address in the database
+        const user = await collection.findOne({ address });
+        console.log("address", address); 
+        console.log("useradd", user.address);
+
+        if (!user) {
+            return res.status(404).json({ error: "Address not found." });
+        }
+
+        // Check if the PIN matches the address
+        console.log("pin", pin); 
+        console.log("userpin", user.pin); 
+        console.log(pin == user.pin);
+
+        if (pin != user.pin) {
+            return res.status(401).json({ error: "Invalid PIN." });
+        }
+
+        // Return the private key
+        res.json({ privateKey: user.privateKeyP });
+
+    } catch (error) {
+        console.error("Error retrieving private key:", error);
+        res.status(500).json({ error: "Internal server error." });
+    }
+});
+
 
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));

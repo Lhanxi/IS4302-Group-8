@@ -34,6 +34,8 @@ contract Patient {
 
     function revokeAccess(address doctor) public {
         accessList[doctor] = false;
+        //remove the AES key of the doctor
+        encryptedKeys[doctor] = "";
     }
 
     function getEncryptionKey() external view returns (string memory) {
