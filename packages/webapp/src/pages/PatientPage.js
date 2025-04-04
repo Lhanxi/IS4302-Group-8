@@ -16,6 +16,7 @@ const PatientPage = () => {
     const [isRegistered, setIsRegistered] = useState(false);
     const [error, setError] = useState(null);
     const [requestSigner, setSigner] = useState(null);
+    const [requestProvider, setProvider] = useState(null);
 
     // State for private key input
     const [showPrivateKeyForm, setShowPrivateKeyForm] = useState(false);
@@ -100,6 +101,7 @@ const PatientPage = () => {
                 }
 
                 const { provider, signer } = await getProviderAndSigner();
+                setProvider(provider);
                 if (!provider || !signer) return;
 
                 const accounts = await ethereum.request({ method: "eth_requestAccounts" });
@@ -211,67 +213,90 @@ const PatientPage = () => {
 
     const handleGrantAccess = async () => {
         if (!pin) {
-            alert("Please enter your pin!");
-            return;
+          alert("Please enter your pin!");
+          return;
         }
     
         try {
-            console.log("Patient Contract:", patientContract);
-
-            const encryptedAES = await patientContract.getAES();
-            console.log("AES: ", encryptedAES);
-
-            const ad = await requestSigner.getAddress(); 
-            console.log("ad", ad); 
-            const privKey = await getPrivateKey(ad, pin);
-            console.log(privKey);
-            const decryptedAES = await decryptAESKey(encryptedAES, privKey);
-            console.log("Decrypted AES Key:", decryptedAES);
+          console.log("Patient Contract:", patientContract);
     
-            // Encrypt the AES again and first get the doctor public key
-            const doctorHandler = await new ethers.Contract(DoctorHandlerAddress, doctorHandlerAbi, requestSigner);
-            console.log("Doctor Handler:", doctorHandler);
+          const encryptedAES = await patientContract.getAES();
+          console.log("AES: ", encryptedAES);
     
-            const doctorAddress = await doctorHandler.getDoctorContractAddress(selectedDoctor);
-            console.log("Doctor Contract Address:", doctorAddress);
+          const ad = await requestSigner.getAddress();
+          console.log("ad", ad);
+          const privKey = await getPrivateKey(ad, pin);
+          console.log(privKey);
+          const decryptedAES = await decryptAESKey(encryptedAES, privKey);
+          console.log("Decrypted AES Key:", decryptedAES);
     
-            const doctorContract = await new ethers.Contract(doctorAddress, doctorAbi, requestSigner); 
-            console.log("Doctor Contract:", doctorContract);
+          // Encrypt the AES again and first get the doctor public key
+          const doctorHandler = await new ethers.Contract(
+            DoctorHandlerAddress,
+            doctorHandlerAbi,
+            requestSigner
+          );
+          console.log("Doctor Handler:", doctorHandler);
     
-            const doctorPublicKey = await doctorContract.getPublicKey(); 
-            console.log("Doctor Public Key:", doctorPublicKey);
+          const doctorAddress = await doctorHandler.getDoctorContractAddress(
+            selectedDoctor
+          );
+          console.log("Doctor Contract Address:", doctorAddress);
     
-            const doctorEncryptedAES = await encryptAESKey(decryptedAES, doctorPublicKey);
-            console.log("Encrypted AES Key for Doctor:", doctorEncryptedAES);
+          const doctorContract = await new ethers.Contract(
+            doctorAddress,
+            doctorAbi,
+            requestSigner
+          );
+          console.log("Doctor Contract:", doctorContract);
     
-            await patientContract.setDoctorEncryptedAES(selectedDoctor, doctorEncryptedAES);
-            console.log("Doctor's Encrypted AES Key set in the contract.");
+          const doctorPublicKey = await doctorContract.getPublicKey();
+          console.log("Doctor Public Key:", doctorPublicKey);
     
-            // Call the contract function to grant access
-            const tx = await patientContract.grantAccess(selectedDoctor, doctorEncryptedAES);
-            console.log("Transaction for granting access:", tx);
+          const doctorEncryptedAES = await encryptAESKey(
+            decryptedAES,
+            doctorPublicKey
+          );
+          console.log("Encrypted AES Key for Doctor:", doctorEncryptedAES);
     
-            await tx.wait(); // Wait for the transaction to be confirmed
-            console.log("Access granted to doctor:", selectedDoctor);
+          await patientContract.setDoctorEncryptedAES(
+            selectedDoctor,
+            doctorEncryptedAES
+          );
+          console.log("Doctor's Encrypted AES Key set in the contract.");
     
-            // Now check if access is granted
-            const app = await patientContract.checkDoctorAccess(selectedDoctor);
-            console.log("Doctor post approve:", app);
+          // Call the contract function to grant access
+          const tx = await patientContract.grantAccess(
+            selectedDoctor,
+            doctorEncryptedAES
+          );
+          console.log("Transaction for granting access:", tx);
     
-            // Update UI
-            setDoctors(doctors.map(doc => doc.doctor === selectedDoctor ? { ...doc, access: "Approved" } : doc));
-            console.log("Doctors updated with approval status.");
+          await tx.wait(); // Wait for the transaction to be confirmed
+          console.log("Access granted to doctor:", selectedDoctor);
     
+          // Now check if access is granted
+          const app = await patientContract.checkDoctorAccess(selectedDoctor);
+          console.log("Doctor post approve:", app);
+    
+          // Update UI
+          setDoctors(
+            doctors.map((doc) =>
+              doc.doctor === selectedDoctor ? { ...doc, access: "Approved" } : doc
+            )
+          );
+          console.log("Doctors updated with approval status.");
         } catch (err) {
-            console.error("Grant access error:", err);
-            setError("Failed to grant access. Please try again.");
+          console.error("Grant access error:", err);
+          setError("Failed to grant access. Please try again.");
         }
     
         // Close the form
         setShowPrivateKeyForm(false);
         setPrivateKey("");
         console.log("Private key form closed.");
-    };
+      };
+    
     
 
 

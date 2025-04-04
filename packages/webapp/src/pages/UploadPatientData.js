@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { pinata } from "../utils/config";
-import { PatientHandlerAddress } from "./contractAdress";
+import { PatientHandlerAddress, ResearchAccessAddress } from "./contractAdress";
 import forge from 'node-forge';
 import { ethers } from 'ethers';
 import { teal } from "@mui/material/colors";
 import encryptPatientData from "./encryptPatientData";
 import { decryptAESKey } from "./DecryptAES";
+import dataAnonymiser from "./dataAnonymiser";
 
 function UploadPatientData() {
     const [patientName, setPatientName] = useState("");
@@ -150,7 +151,18 @@ function UploadPatientData() {
     
             //navigate(`/display/${upload.cid}`);
             //console.log("Navigation to display page with CID:", upload.cid);
-    
+
+            //anonymise the data and then store it onto the CID 
+            const anonymisedData = dataAnonymiser(patientData); 
+            console.log("anonymised Data", anonymisedData); 
+
+            const publicUpload =  await pinata.upload.public.file(anonymisedData);
+            console.log("Pinata upload response:", publicUpload);
+
+            const researchAccessInstance = await new ethers.Contract(ResearchAccessAddress, patientHandlerAbi, signer);
+            await researchAccessInstance.addCID(publicUpload.cid); 
+            console.log("CID uploaded to the researchaccess contract:", publicUpload.cid);
+
         } catch (error) {
             // Log detailed error information
             console.error("Upload failed:", error);
