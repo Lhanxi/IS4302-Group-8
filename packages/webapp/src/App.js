@@ -8,6 +8,7 @@ import RegisterDoctor from "./pages/RegisterDoctor";
 import DisplayPatientData from "./pages/DisplayPatientData";
 import UploadPatientData from "./pages/UploadPatientData";
 import PatientRecords from "./pages/PatientRecords";
+import ResearchAccess from "./pages/ResearchAccess";
 
 function App() {
     const [account, setAccount] = useState(null);
@@ -51,6 +52,9 @@ function App() {
                     path="/patient-records" 
                     element={<PatientRecords /> } /> 
 
+                <Route 
+                    path="/research"
+                    element={<ResearchAccess />} />
             </Routes>
     );
 }
