@@ -18,7 +18,10 @@ import {
   import { createTheme, ThemeProvider } from "@mui/material/styles";
   import { ethers } from "ethers";
   import React, { useEffect, useState } from "react";
+  import axios from 'axios';
   import { PatientHandlerAddress } from "./contractAdress";
+import { decryptAESKey } from "./DecryptAES";
+import decryptPatientDataCopy from "./decryptPatientDataCopy";
   
   const PatientRecords = () => {
     const [records, setRecords] = useState(null);
@@ -26,13 +29,22 @@ import {
     const [error, setError] = useState(null);
     const [patientContract, setPatientContract] = useState(null);
     const [currentAccount, setCurrentAccount] = useState(null);
+    const [input, setInput] = useState('');
+    const [pin, setPin] = useState('');
+    const [showPinInput, setShowPinInput] = useState(false); 
+    const [hasRequestedData, setHasRequestedData] = useState(false); 
+    const [privateKey, setPrivateKey] = useState('');
+    const [patientData, setPatientData] = useState([]);
+    const [decryptedPatientData, setDecryptedPatientData] = useState([]);
+
   
     const patientHandlerAbi = [
       "function getPatientContract(address patient) public view returns (address)",
     ];
   
     const patientAbi = [
-      "function viewOwnRecords() external view returns (string[] memory cids, address[] memory recordDoctors, uint256[] memory timestamps, string[] memory recordTypes, string memory aesKey, string memory publicKey, address[] memory authorizedDoctors)",
+      "function getCIDs() external view returns (string[] memory)",
+      "function getAES() external view returns (string memory)"
     ];
   
     const theme = createTheme({
@@ -49,10 +61,41 @@ import {
         fontFamily: "Roboto, sans-serif",
       },
     });
+
+    const getPrivateKey = async (ad, pin) => {
+        try {
+            const response = await axios.get(`http://localhost:5001/get-private-key/${ad}/${pin}`);
+            const privKey = response.data.privateKey;
+            console.log(privKey);
+            setPrivateKey(privKey); // Assuming setPrivateKey is a function to set the state
+            return privKey; // Returning the privateKey
+        } catch (error) {
+            console.error("Error fetching private key:", error);
+            throw error; // Optionally throw error if needed
+        }
+    };    
+
+    const fetchData = async (cid, localArray) => {
+        try {
+            const response = await fetch(`http://localhost:5001/fetch-ipfs?cid=${cid}`);
+            if (!response.ok) throw new Error("Failed to fetch patient data");
+    
+            const data = await response.json();
+            console.log("data", data);
+    
+            localArray.push(data); // Push into local array
+        } catch (err) {
+            console.error("Fetch error:", err);
+            setError(err.message);
+        }
+    };
+    
   
     useEffect(() => {
         const init = async () => {
           try {
+            if (!hasRequestedData || !pin) return; // NEW: Only run if user clicked "Request Data" AND set PIN
+      
             console.log("Initializing PatientRecords component...");
       
             if (!window.ethereum) {
@@ -69,7 +112,6 @@ import {
             console.log("Connected account:", accounts[0]);
             setCurrentAccount(accounts[0]);
       
-            // Initialize PatientHandler contract
             console.log("Initializing PatientHandler contract...");
             const patientHandlerContract = new ethers.Contract(
               PatientHandlerAddress,
@@ -77,7 +119,6 @@ import {
               signer
             );
       
-            // Get patient's contract address
             console.log("Fetching patient contract address...");
             const patientAddress = await patientHandlerContract.getPatientContract(
               accounts[0]
@@ -91,7 +132,6 @@ import {
               return;
             }
       
-            // Initialize Patient contract
             console.log("Initializing Patient contract...");
             const patientContractInstance = new ethers.Contract(
               patientAddress,
@@ -100,11 +140,46 @@ import {
             );
             setPatientContract(patientContractInstance);
       
-            // Fetch records
             console.log("Fetching patient records...");
-            const recordData = await patientContractInstance.viewOwnRecords();
-            console.log("Fetched record data:", recordData);
-            setRecords(recordData);
+      
+            console.log("Fetching CIDS");
+            const CIDs = await patientContractInstance.getCIDs();
+            console.log("CIDs", CIDs);
+      
+            console.log("Fetching encrypted AES");
+            const encryptedAES = await patientContractInstance.getAES();
+            console.log("AES", encryptedAES);
+      
+            console.log("Fetching patient private key"); 
+            const ad = await signer.getAddress(); 
+            const privKey = await getPrivateKey(ad, pin); 
+            console.log("priv key", privKey); 
+
+            console.log("Decrypting the AES"); 
+            const decryptedAES = await decryptAESKey(encryptedAES, privKey);
+            console.log("decrypted AEs", decryptedAES);
+            
+            console.log("Getting the data from pinata"); 
+            const localPatientData = [];
+
+            for (const cid of Array.from(CIDs)) {
+                await fetchData(cid, localPatientData); // Pass the local array to be updated
+                console.log("called data");
+            }
+
+            console.log("Final localPatientData:", localPatientData);
+
+
+
+            for (let i = 0; i < localPatientData.length; i++) {
+            console.log("power");
+            let decryptedData = await decryptPatientDataCopy(localPatientData[i], decryptedAES);
+            console.log("decrypte datat", decryptedData); 
+            console.log("tests");
+            setDecryptedPatientData((prevData) => [...prevData, decryptedData]);
+            }
+
+
             setLoading(false);
           } catch (err) {
             console.error("Error initializing PatientRecords:", err);
@@ -114,133 +189,34 @@ import {
         };
       
         init();
-      }, []);
+      }, [hasRequestedData, pin]);
+      
       
   
-    if (loading) {
-      return (
-        <ThemeProvider theme={theme}>
-          <Container
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              minHeight: "100vh",
-            }}
-          >
-            <CircularProgress />
-          </Container>
-        </ThemeProvider>
-      );
-    }
-  
-    if (error) {
-      return (
-        <ThemeProvider theme={theme}>
-          <Container
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              minHeight: "100vh",
-            }}
-          >
-            <Alert severity="error">{error}</Alert>
-          </Container>
-        </ThemeProvider>
-      );
-    }
-  
     return (
-      <ThemeProvider theme={theme}>
-        <Container sx={{ py: 4 }}>
-          <Typography variant="h4" gutterBottom sx={{ mb: 4 }}>
-            Your Medical Records
-          </Typography>
-  
-          <Grid container spacing={3}>
-            {/* Summary Card */}
-            <Grid item xs={12}>
-              <Card
-                sx={{
-                  mb: 4,
-                  backgroundColor: "rgba(0, 0, 0, 0.7)",
-                  backdropFilter: "blur(10px)",
+        <div>
+        {!showPinInput ? (
+            <button onClick={() => setShowPinInput(true)}>Request Data</button>
+        ) : (
+            <>
+            <input
+                type="password"
+                placeholder="Enter PIN"
+                onChange={(e) => setInput(e.target.value)}
+            />
+            <button
+                onClick={() => {
+                setPin(input);
+                setHasRequestedData(true);
                 }}
-              >
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Summary
-                  </Typography>
-                  <Typography>Total Records: {records.cids.length}</Typography>
-                  <Typography>
-                    Authorized Doctors: {records.authorizedDoctors.length}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-  
-            {/* Records Table */}
-            <Grid item xs={12}>
-              <TableContainer
-                component={Paper}
-                sx={{
-                  backgroundColor: "rgba(0, 0, 0, 0.7)",
-                  backdropFilter: "blur(10px)",
-                }}
-              >
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Record Type</TableCell>
-                      <TableCell>Doctor</TableCell>
-                      <TableCell>Date</TableCell>
-                      <TableCell>CID</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {records.cids.map((cid, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{records.recordTypes[index]}</TableCell>
-                        <TableCell>
-                          <Box
-                            sx={{
-                              backgroundColor: "rgba(0, 188, 212, 0.1)",
-                              padding: "4px 8px",
-                              borderRadius: "4px",
-                              display: "inline-block",
-                            }}
-                          >
-                            {records.recordDoctors[index]}
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          {new Date(
-                            records.timestamps[index] * 1000
-                          ).toLocaleString()}
-                        </TableCell>
-                        <TableCell>
-                          <Box
-                            sx={{
-                              backgroundColor: "rgba(0, 188, 212, 0.1)",
-                              padding: "4px 8px",
-                              borderRadius: "4px",
-                              display: "inline-block",
-                              wordBreak: "break-all",
-                            }}
-                          >
-                            {cid}
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Grid>
-          </Grid>
-        </Container>
-      </ThemeProvider>
+            >
+                Set PIN
+            </button>
+            </>
+        )}
+        </div>
+
+       
     );
   };
   

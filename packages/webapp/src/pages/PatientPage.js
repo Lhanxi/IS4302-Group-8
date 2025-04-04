@@ -95,6 +95,7 @@ const PatientPage = () => {
                 try {
                     patientAddress = await patientHandlerContractInstance.getPatientContract(accounts[0]);
                     console.log("Fetched patient contract address:", patientAddress);
+                    console.log("Signer address", signer.getAddress());
                 } catch (err) {
                     console.error("Error fetching patient contract:", err);
                     setError("Failed to fetch patient contract. Please try again.");
