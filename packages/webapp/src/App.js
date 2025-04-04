@@ -7,6 +7,7 @@ import DoctorPage from "./pages/DoctorPage";
 import RegisterDoctor from "./pages/RegisterDoctor";
 import DisplayPatientData from "./pages/DisplayPatientData";
 import UploadPatientData from "./pages/UploadPatientData";
+import PatientRecords from "./pages/PatientRecords";
 
 function App() {
     const [account, setAccount] = useState(null);
@@ -45,6 +46,11 @@ function App() {
                     path="/uploadPatientData"
                     element={<UploadPatientData />} 
                 />
+
+                <Route 
+                    path="/patient-records" 
+                    element={<PatientRecords /> } /> 
+
             </Routes>
     );
 }

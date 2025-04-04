@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Button } from '@mui/material';
 import { ethers } from 'ethers';
-import { PatientAddress, PatientHandlerAddress, DoctorHandlerAddress  } from './contractAdress';
+import { Link, useNavigate } from 'react-router-dom';
+import {  PatientHandlerAddress, DoctorHandlerAddress  } from './contractAdress';
 import encryptAESKey from './EncryptAES';
 import { decryptAESKey } from './DecryptAES';
 import axios from 'axios';
@@ -20,6 +22,9 @@ const PatientPage = () => {
     const [privateKey, setPrivateKey] = useState("");
     const [selectedDoctor, setSelectedDoctor] = useState(null);
     const [pin, setPin] = useState("");
+
+    const navigate = useNavigate();
+
 
     const patientHandlerAbi = [
       "function getPendingRequestForPatient(address patient) public view returns (address[] memory)",
@@ -257,9 +262,13 @@ const PatientPage = () => {
             {!isRegistered ? (
                 <div>
                     <h2>You are not registered yet.</h2>
+                    <button onClick={() => navigate('/patient-records')}>Go to Registration Page</button>
                 </div>
+                
             ) : (
                 <>
+                <button onClick={() => navigate('/patient-records')}>Go to Registration Page</button>
+
                     <table border="1" style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr>

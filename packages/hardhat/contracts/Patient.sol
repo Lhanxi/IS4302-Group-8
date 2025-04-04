@@ -9,6 +9,17 @@ This will store the CID for Web3Storage and manage the encryption keys for docto
 contract Patient {
     //owner of the contract is the patient
     address public owner;
+
+    // Structure to store record metadata
+    struct Record {
+        string cid;           // Content Identifier for the record
+        address doctor;       // Doctor who created the record
+        uint256 timestamp;    // When the record was created
+        string recordType;    // Type of record (e.g., "medical", "prescription", "lab")
+    }
+    
+    Record[] public records;  // Array of records with metadata
+    
     string[] public CID; // this is where the data is stored on the IFPS
     string public patientAES; //this is the AES key that is used to encrypt datat, it is encrypted with the patient public key
     string public patientPublicKey; //this is the 
@@ -19,6 +30,11 @@ contract Patient {
 
     constructor (address patient) {
         owner = patient;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only the patient can perform this action");
+        _;
     }
 
     function grantAccess(address doctor, string memory encryptedKey) external {
@@ -73,6 +89,50 @@ contract Patient {
 
     function setDoctorEncryptedAES(address doctor, string memory encryptedAES) external {
         encryptedKeys[doctor] = encryptedAES;
+    }
+
+    // Function for patient to view their own records
+    function viewOwnRecords() external view onlyOwner returns (
+        string[] memory cids,
+        address[] memory recordDoctors,
+        uint256[] memory timestamps,
+        string[] memory recordTypes,
+        string memory aesKey,
+        string memory publicKey,
+        address[] memory authorizedDoctors
+    ) {
+        uint recordCount = records.length;
+        cids = new string[](recordCount);
+        recordDoctors = new address[](recordCount);
+        timestamps = new uint256[](recordCount);
+        recordTypes = new string[](recordCount);
+        
+        for(uint i = 0; i < recordCount; i++) {
+            cids[i] = records[i].cid;
+            recordDoctors[i] = records[i].doctor;
+            timestamps[i] = records[i].timestamp;
+            recordTypes[i] = records[i].recordType;
+        }
+        
+        aesKey = patientAES;
+        publicKey = patientPublicKey;
+        
+        // Create array of authorized doctors
+        uint count = 0;
+        for(uint i = 0; i < doctors.length; i++) {
+            if(accessList[doctors[i]]) {
+                count++;
+            }
+        }
+        
+        authorizedDoctors = new address[](count);
+        uint index = 0;
+        for(uint i = 0; i < doctors.length; i++) {
+            if(accessList[doctors[i]]) {
+                authorizedDoctors[index] = doctors[i];
+                index++;
+            }
+        }
     }
 
 }
