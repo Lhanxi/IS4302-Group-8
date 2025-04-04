@@ -172,11 +172,11 @@ import decryptPatientDataCopy from "./decryptPatientDataCopy";
 
 
             for (let i = 0; i < localPatientData.length; i++) {
-            console.log("power");
-            let decryptedData = await decryptPatientDataCopy(localPatientData[i], decryptedAES);
-            console.log("decrypte datat", decryptedData); 
-            console.log("tests");
-            setDecryptedPatientData((prevData) => [...prevData, decryptedData]);
+                console.log("power");
+                let decryptedData = await decryptPatientDataCopy(localPatientData[i], decryptedAES);
+                console.log("decrypte datat", decryptedData); 
+                console.log("tests");
+                setDecryptedPatientData((prevData) => [...prevData, decryptedData]);
             }
 
 
@@ -214,6 +214,20 @@ import decryptPatientDataCopy from "./decryptPatientDataCopy";
             </button>
             </>
         )}
+
+            {decryptedPatientData.length > 0 && (
+                <div>
+                    <h3>Decrypted Patient Records:</h3>
+                    {decryptedPatientData.map((record, idx) => (
+                        <div key={idx} style={{ border: "1px solid #ccc", marginBottom: "1rem", padding: "1rem" }}>
+                            <p><strong>Name:</strong> {record.name}</p>
+                            <p><strong>ID:</strong> {record.identificationNumber}</p>
+                            <p><strong>Health:</strong> {record.healthRecords}</p>
+                            <p><strong>Timestamp:</strong> {record.timestamp}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
 
        
