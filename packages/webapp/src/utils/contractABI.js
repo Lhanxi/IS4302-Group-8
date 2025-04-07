@@ -22,6 +22,12 @@ const patientABI = [
     "function setPatientPublicKey(string memory publicKey) external",
     "function setEncryptedAESKey(string memory encryptedAES) external",
     "function setDoctorEncryptedAES(address doctor, string memory encryptedAES) external",
+    "function insuranceCompanyRequestAccess(address insuranceCompany) external",
+    "function insuranceCompanyRevokeAccess(address insuranceCompany) public",
+    "function getInsuranceCompanyEncryptionKey(address insuranceCompany) external view returns (string memory)", 
+    "function setInsuranceCompanyEncryptedAES(address insuranceCompany, string memory encryptedAES) external",
+    "function grantInsuranceCompanyAccess(address insuranceCompany, string memory encryptedKey) external",
+    "function doctorRequestAccess(address doctor) external",
     "function setResearchAccess(bool researchAccess) external",
     "function getResearchAccess() public view returns (bool)"
 ]
@@ -31,7 +37,9 @@ const patientHandlerABI = [
     "function requestAccess(address patient) external",
     "function setPatientPublicKey(string memory publicKey) public",
     "function getPendingRequestForPatient(address patient) public view returns (address[] memory)",
-    "function getPatientContract(address patient) public view returns (address)"
+    "function getPatientContract(address patient) public view returns (address)",
+    "function insuranceCompanyRequestAccess(address patient) external",
+    "function getInsuranceCompanyPendingRequestForPatient(address patient) public view returns (address[] memory)"
 ]
 
 const researchAccessABI = [

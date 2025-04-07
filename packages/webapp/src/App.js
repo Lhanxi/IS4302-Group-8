@@ -62,7 +62,7 @@ function App() {
                     element={<RegisterInsuranceCompany />} />
                 <Route 
                     path="/insuranceCompany"
-                    element={<insuranceCompany />} />
+                    element={<InsuranceCompanyPage />} />
             </Routes>
     );
 }

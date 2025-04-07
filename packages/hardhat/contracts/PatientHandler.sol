@@ -12,7 +12,10 @@ contract PatientHandler {
     mapping(address => mapping(address => bool)) public accessRequests; // Tracks access requests
     mapping(address => address[]) private pendingDoctors; // List of doctors per patient
     mapping(address => string) patientPublicKeys;
+    mapping(address => address[]) private pendingInsuranceCompanies; // List of insurance companies per patient
+    mapping(address => mapping(address => bool)) public insuranceCompanyAccessRequests; // Tracks access requests
 
+    event InsuranceCompanyAccessRequested(address indexed patient, address indexed insuranceCompany);
     event PatientRegistered(address indexed patient, address contractAddress);
     event AccessRequested(address indexed patient, address indexed doctor);
 
@@ -56,6 +59,26 @@ contract PatientHandler {
 
     function getPatientContract(address patient) public view returns (address) {
         return patientContracts[patient];
+    }
+
+    function insuranceCompanyRequestAccess(address patient) external {
+        require(patientContracts[patient] != address(0), "Patient is not registered");
+        require(!insuranceCompanyAccessRequests[patient][msg.sender], "Access request already sent");
+
+        insuranceCompanyAccessRequests[patient][msg.sender] = true;
+        pendingInsuranceCompanies[patient].push(msg.sender); 
+
+        address patientContract = patientContracts[patient];
+        Patient patientContractInstance = Patient(patientContract);
+
+        patientContractInstance.requestAccess(msg.sender);
+
+        emit InsuranceCompanyAccessRequested(patient, msg.sender);
+    }
+
+    
+    function getInsuranceCompanyPendingRequestForPatient(address patient) public view returns (address[] memory) {
+        return pendingInsuranceCompanies[patient]; // Return list of doctors who requested access
     }
 }
 

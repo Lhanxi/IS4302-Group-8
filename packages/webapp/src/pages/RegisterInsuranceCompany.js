@@ -123,9 +123,8 @@ const RegisterInsuranceCompany = () => {
       await tx.wait();
 
       alert("Insurance company's authentication status updated!");
-
-      const isAuthenticated =
-        await InsuranceCompanyHandlerContract.isAuthenticated(signer.address);
+      
+      const isAuthenticated = await InsuranceCompanyHandlerContract.isAuthenticated(signer.address);
       if (isAuthenticated) {
         navigate("/insuranceCompany");
       } else {
