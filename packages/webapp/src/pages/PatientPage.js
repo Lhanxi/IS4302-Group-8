@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@mui/material';
 import { ethers } from 'ethers';
 import { Link, useNavigate } from 'react-router-dom';
-import {  PatientHandlerAddress, DoctorHandlerAddress  } from './contractAdress';
-import encryptAESKey from './EncryptAES';
-import { decryptAESKey } from './DecryptAES';
+import {  patientHandlerAddress, doctorHandlerAddress  } from "../utils/contractAddress";
+import { patientHandlerABI, patientABI, doctorHandlerABI, doctorABI } from "../utils/contractABI";
+import encryptAESKey from '../utils/EncryptAES';
+import { decryptAESKey } from '../utils/DecryptAES';
 import axios from 'axios';
 
 const PatientPage = () => {
@@ -29,32 +30,10 @@ const PatientPage = () => {
     const navigate = useNavigate();
 
 
-    const patientHandlerAbi = [
-      "function getPendingRequestForPatient(address patient) public view returns (address[] memory)",
-      "function registerPatient() external",
-      "function accessRequests(address patient, address doctor) public view returns (bool)",
-      "function getPatientContract(address patient) public view returns (address)",
-  ];
-    const patientAbi = [
-        "function accessRequests(address doctor) external view returns (bool)",
-        "function accessList(address doctor) external view returns (bool)",
-        "function revokeAccess(address doctor) external",
-        "function grantAccess(address doctor, string memory encryptedKey) external", 
-        "function getAES() external view returns (string memory)", 
-        "function checkDoctorAccess(address doctor) external view returns (bool)", 
-        "function setDoctorEncryptedAES(address doctor, string memory encryptedAES) external",
-        "function getResearchAccess() public view returns (bool)", 
-        "function setResearchAccess(bool researchAccess) external"
-
-    ];
-
-    const doctorHandlerAbi = [
-        "function getDoctorContractAddress(address _doctor) view public returns (address)",
-    ]; 
-
-    const doctorAbi = [
-        "function getPublicKey() public view returns (string memory)",
-    ]
+    const patientHandlerAbi = patientHandlerABI;
+    const patientAbi = patientABI;
+    const doctorHandlerAbi = doctorHandlerABI;
+    const doctorAbi = doctorABI;
 
     const getProviderAndSigner = async () => {
         if (!window.ethereum) {
@@ -108,7 +87,7 @@ const PatientPage = () => {
                 await setCurrentAccount(accounts[0]);
                 console.log("Current account:", accounts[0]);
 
-                const patientHandlerContractInstance = new ethers.Contract(PatientHandlerAddress, patientHandlerAbi, signer);
+                const patientHandlerContractInstance = new ethers.Contract(patientHandlerAddress, patientHandlerAbi, signer);
                 await setPatientHandlerContract(patientHandlerContractInstance);
                 console.log("PatientHandler contract initialized:", patientHandlerContractInstance);
 
@@ -232,7 +211,7 @@ const PatientPage = () => {
     
           // Encrypt the AES again and first get the doctor public key
           const doctorHandler = await new ethers.Contract(
-            DoctorHandlerAddress,
+            doctorHandlerAddress,
             doctorHandlerAbi,
             requestSigner
           );

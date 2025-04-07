@@ -28,3 +28,8 @@ IS4302 Group 8
     cd ../webapp
     npm start
     ```
+7. Navigate to the `backend` directory and start the application:
+    ```bash
+    cd ../backend
+    node server.js
+    ```

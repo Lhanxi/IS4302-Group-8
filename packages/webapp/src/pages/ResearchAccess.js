@@ -1,8 +1,12 @@
 import React, { useEffect } from "react";
 import { Button } from "@mui/material";
-import { ResearchAccessABI, ResearchAccessAddress } from "./contractAdress";
+import { researchAccessAddress } from "../utils/contractAddress";
+import { researchAccessABI } from "../utils/contractABI";
 import { useState } from "react";
 import { ethers } from 'ethers';
+
+const ResearchAccessABI = researchAccessABI;
+const ResearchAccessAddress = researchAccessAddress;
 
 function ResearchAccess() {
     const [researchAccess, setResearchAccess] = useState(null);

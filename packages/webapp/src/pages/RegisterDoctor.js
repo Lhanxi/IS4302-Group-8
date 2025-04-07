@@ -3,13 +3,10 @@ import { ethers } from 'ethers';
 import forge from 'node-forge';
 import { Button, CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { doctorHandlerAddress } from "../utils/contractAddress";
+import { doctorHandlerABI } from "../utils/contractABI";
 
-// Smart contract details (replace with actual contract details)
-const doctorHandlerAddress = "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e"; // replace with actual address
-const doctorHandlerAbi = [
-  "function isAuthenticated(address _doctor) view external returns (bool)",
-  "function authenticateDoctor(address _doctor, string memory _publicKey) external"
-];
+const doctorHandlerAbi = doctorHandlerABI;
 
 const RegisterDoctor = () => {
   const [loading, setLoading] = useState(false);

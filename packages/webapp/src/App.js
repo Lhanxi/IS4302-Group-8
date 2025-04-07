@@ -9,6 +9,8 @@ import DisplayPatientData from "./pages/DisplayPatientData";
 import UploadPatientData from "./pages/UploadPatientData";
 import PatientRecords from "./pages/PatientRecords";
 import ResearchAccess from "./pages/ResearchAccess";
+import InsuranceCompanyPage from "./pages/InsuranceCompany"
+import RegisterInsuranceCompany from "./pages/RegisterInsuranceCompany"
 
 function App() {
     const [account, setAccount] = useState(null);
@@ -55,6 +57,12 @@ function App() {
                 <Route 
                     path="/research"
                     element={<ResearchAccess />} />
+                <Route 
+                    path="/registerInsuranceCompany"
+                    element={<RegisterInsuranceCompany />} />
+                <Route 
+                    path="/insuranceCompany"
+                    element={<insuranceCompany />} />
             </Routes>
     );
 }

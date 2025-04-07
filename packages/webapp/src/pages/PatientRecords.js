@@ -19,9 +19,12 @@ import {
   import { ethers } from "ethers";
   import React, { useEffect, useState } from "react";
   import axios from 'axios';
-  import { PatientHandlerAddress } from "./contractAdress";
-import { decryptAESKey } from "./DecryptAES";
-import decryptPatientDataCopy from "./decryptPatientDataCopy";
+  import { patientHandlerAddress } from "../utils/contractAddress";
+  import { patientABI, patientHandlerABI } from "../utils/contractABI";
+  import { decryptAESKey } from "../utils/DecryptAES";
+  import decryptPatientDataCopy from "../utils/decryptPatientDataCopy";
+  
+  const PatientHandlerAddress = patientHandlerAddress;
   
   const PatientRecords = () => {
     const [records, setRecords] = useState(null);
@@ -38,14 +41,8 @@ import decryptPatientDataCopy from "./decryptPatientDataCopy";
     const [decryptedPatientData, setDecryptedPatientData] = useState([]);
 
   
-    const patientHandlerAbi = [
-      "function getPatientContract(address patient) public view returns (address)",
-    ];
-  
-    const patientAbi = [
-      "function getCIDs() external view returns (string[] memory)",
-      "function getAES() external view returns (string memory)"
-    ];
+    const patientHandlerAbi = patientHandlerABI
+    const patientAbi = patientABI
   
     const theme = createTheme({
       palette: {

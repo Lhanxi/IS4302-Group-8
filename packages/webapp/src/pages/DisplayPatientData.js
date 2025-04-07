@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import forge from "node-forge";
-import { decryptAESKey } from "./DecryptAES";
+import { decryptAESKey } from "../utils/DecryptAES";
 import { ethers } from 'ethers';
-import { PatientHandlerAddress } from "./contractAdress";
-import decryptPatientData from "./decryptPatientData";
+import { PatientHandlerAddress } from "../utils/contractAddress";
+import { patientABI, patientHandlerABI } from "../utils/contractABI";
+import decryptPatientData from "../utils/decryptPatientData";
 
 function DisplayPatientPage() {
     // const { cid } = useParams();
@@ -17,14 +18,9 @@ function DisplayPatientPage() {
     const [error1, setError1] = useState(null);
     const [patientAccount, setPatientAccount] = useState(""); // State for patient account input
 
-    const patientHandlerAbi = [
-        "function getPatientContract(address patient) public view returns (address)",
-    ]
-    const patientAbi = [
-        "function getDoctorEncryptionKey(address doctor) external view returns (string memory)",
-        "function addCID(string memory newCID) external",
-        "function getCIDs() external view returns (string[] memory)"
-    ]
+    const patientHandlerAbi = patientHandlerABI
+
+    const patientAbi = patientABI
 
 
     const getSigner = async () => {

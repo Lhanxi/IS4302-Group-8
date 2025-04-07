@@ -1,7 +1,11 @@
 const hre = require("hardhat");
+const fs = require("fs");
+const path = require("path");
 
 async function main() {
-  const ConnectWalletTest = await hre.ethers.getContractFactory("ConnectWalletTest");
+  const ConnectWalletTest = await hre.ethers.getContractFactory(
+    "ConnectWalletTest"
+  );
   const connectWalletTest = await ConnectWalletTest.deploy();
   await connectWalletTest.waitForDeployment();
   const contractAddress = await connectWalletTest.getAddress();
@@ -15,8 +19,8 @@ async function main() {
   console.log("PatientHandler deployed to:", patientHandlerAddress);
 
   // Get the first signer (patient) from Hardhat network
-  const [patient, doctor] = await hre.ethers.getSigners();
-  console.log("Signer address:", patient.address);  // Log the address to debug
+  const [patient, doctor, insuranceCompany] = await hre.ethers.getSigners();
+  console.log("Signer address:", patient.address); // Log the address to debug
 
   // Call the `registerPatient` function of PatientHandler to deploy a new Patient contract
   const registerTx = await patientHandler.connect(patient).registerPatient();
@@ -40,20 +44,58 @@ async function main() {
   const doctorHandlerAddress = await doctorHandler.getAddress();
   console.log("DoctorHandler contract deployed at address:", doctorHandlerAddress);
 
+  // Deploy InsuranceCompanyOracle contract
+  const InsuranceCompanyOracle = await hre.ethers.getContractFactory("InsuranceCompanyOracle");
+  const insuranceCompanyOracle = await InsuranceCompanyOracle.deploy();
+  await insuranceCompanyOracle.waitForDeployment();
+  const insuranceCompanyOracleAddress =
+  await insuranceCompanyOracle.getAddress();
+  console.log("InsuranceCompanyOracle contract deployed at address:", insuranceCompanyOracleAddress);
+
+  // Deploy InsuranceCompanyHandler contract
+  const InsuranceCompanyHandler = await hre.ethers.getContractFactory("InsuranceCompanyHandler");
+  const insuranceCompanyHandler = await InsuranceCompanyHandler.deploy(insuranceCompanyOracleAddress);
+  await insuranceCompanyHandler.waitForDeployment();
+  const insuranceCompanyHandlerAddress = await insuranceCompanyHandler.getAddress();
+  console.log("InsuranceCompanyHandler contract deployed at address:", insuranceCompanyHandlerAddress);
+
+  // Register insurance company in the oracle
+  console.log("Insurance Company address:", insuranceCompany.address);
+  await insuranceCompanyOracle.addInsuranceCompany(insuranceCompany.address, "TestInsuranceCompany");
+
   console.log("Doctor address:", doctor.address);
-  await doctorOracle.addDoctor(doctor.address, "testDoctor")
+  await doctorOracle.addDoctor(doctor.address, "testDoctor");
 
-
-  // Deploy PatientHandler contract
-  const ResearchAccess = await hre.ethers.getContractFactory("ResearchAccess");
-  const researchAccess = await ResearchAccess.deploy();
-  await researchAccess.waitForDeployment();
-  const researchAccessAddress = await researchAccess.getAddress();
-  console.log("ResearchAccess deployed to:", researchAccessAddress);
-
+  return {
+    connectWalletTestAddress: contractAddress,
+    patientHandlerAddress: patientHandlerAddress,
+    patientContractAddress: patientContractAddress,
+    doctorOracleAddress: doctorOracleAddress,
+    doctorHandlerAddress: doctorHandlerAddress,
+    authenticatedDoctorAddress: doctor.address,
+    insuranceCompanyOracleAddress: insuranceCompanyOracleAddress,
+    insuranceCompanyHandlerAddress: insuranceCompanyHandlerAddress,
+    authenticatedInsuranceCompanyAddress: insuranceCompany.address,
+  };
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+main()
+  .then((addresses) => {
+    const jsFilePath = path.resolve(
+      __dirname,
+      "../../webapp/src/utils/contractAddress.js"
+    );
+    try {
+      const content = `
+      module.exports = ${JSON.stringify(addresses, null, 2)};
+    `;
+      fs.writeFileSync(jsFilePath, content);
+      console.log(`Addresses written to: ${jsFilePath}`);
+    } catch (error) {
+      console.error("Error writing to file:", error);
+    }
+  })
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });

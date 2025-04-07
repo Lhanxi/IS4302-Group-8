@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { ethers } from "ethers";
 import { Button, TextField } from "@mui/material";
+import { ethers } from "ethers";
+import React, { useEffect, useState } from "react";
 import { patientHandlerAddress } from "../utils/contractAddress";
 import { patientHandlerABI } from "../utils/contractABI";
 
@@ -8,7 +8,7 @@ import { patientHandlerABI } from "../utils/contractABI";
 const patientHandlerAbi = patientHandlerABI;
 const PatientHandlerAddress = patientHandlerAddress;
 
-const DoctorPage = () => {
+const InsuranceCompanyPage = () => {
   const [patientAddress, setPatientAddress] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -75,7 +75,11 @@ const DoctorPage = () => {
         return;
       }
 
-      const contract = new ethers.Contract(PatientHandlerAddress, patientHandlerAbi, signer);
+      const contract = new ethers.Contract(
+        PatientHandlerAddress,
+        patientHandlerAbi,
+        signer
+      );
       console.log("Contract instance:", contract);
 
       const tx = await contract.requestAccess(patientAddress);
@@ -99,7 +103,7 @@ const DoctorPage = () => {
 
   return (
     <div style={{ padding: "20px", maxWidth: "400px", margin: "auto" }}>
-      <h2>Doctor Page</h2>
+      <h2>Insurance Company Page</h2>
       <TextField
         label="Enter patient address"
         variant="outlined"
@@ -122,4 +126,4 @@ const DoctorPage = () => {
   );
 };
 
-export default DoctorPage;
+export default InsuranceCompanyPage;

@@ -26,7 +26,7 @@ contract PatientHandler {
         patientContracts[msg.sender] = deployedAddress;
 
         emit PatientRegistered(msg.sender, deployedAddress);
-}
+    }
 
 
     function requestAccess(address patient) external {

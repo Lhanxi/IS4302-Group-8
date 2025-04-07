@@ -115,11 +115,20 @@ function HomePage({ account, setAccount, provider, setProvider }) {
                             </Link>
                         </Box>
 
-                        {/* Link to DoctorPage */}
+                        {/* Link to Register Doctor Page */}
                         <Box textAlign="center" mt={3}>
                             <Link to="/registerDoctor">
                                 <Button variant="contained" color="secondary" size="large">
                                     Register as a Doctor
+                                </Button>
+                            </Link>
+                        </Box>
+
+                        {/* Link to Register Insurance Company Page */}
+                        <Box textAlign="center" mt={3}>
+                            <Link to="/registerInsuranceCompany">
+                                <Button variant="contained" color="secondary" size="large">
+                                    Register as an insurance company
                                 </Button>
                             </Link>
                         </Box>

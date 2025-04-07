@@ -1,14 +1,18 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { pinata } from "../utils/config";
-import { PatientHandlerAddress, ResearchAccessAddress, ResearchAccessABI } from "./contractAdress";
+import { patientHandlerAddress, researchAccessAddress } from "../utils/contractAddress";
+import { researchAccessABI } from "../utils/contractABI"
 import forge from 'node-forge';
 import { ethers } from 'ethers';
 import { teal } from "@mui/material/colors";
-import encryptPatientData from "./encryptPatientData";
-import { decryptAESKey } from "./DecryptAES";
-import dataAnonymiser from "./dataAnonymiser";
+import encryptPatientData from "../utils/encryptPatientData";
+import { decryptAESKey } from "../utils/DecryptAES";
+import dataAnonymiser from "../utils/dataAnonymiser";
 
+const ResearchAccessABI = researchAccessABI;
+const PatientHandlerAddress = patientHandlerAddress;
+const ResearchAccessAddress = researchAccessAddress;
 
 function UploadPatientData() {
     const [patientName, setPatientName] = useState("");

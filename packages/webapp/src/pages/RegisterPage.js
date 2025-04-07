@@ -3,20 +3,15 @@ import forge from 'node-forge';
 import { ethers } from 'ethers';
 import { Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { generateAESKey } from './AESgenerator';
-import encryptAESKey from './EncryptAES';
-import { PatientHandlerAddress } from './contractAdress';
+import { generateAESKey } from '../utils/AESgenerator';
+import encryptAESKey from '../utils/EncryptAES';
+import { patientHandlerAddress } from '../utils/contractAddress';
+import { patientHandlerABI, patientABI } from "../utils/contractABI";
 import axios from 'axios';
 
-const patientHandlerAbi = [
-  "function registerPatient() external",
-  "function getPatientContract(address patient) public view returns (address)", 
-    "function setPatientPublicKey(string memory publicKey) public",
-];
-const patientAbi = [
-  "function setPatientPublicKey(string memory publicKey) external", 
-  "function setEncryptedAESKey(string memory encryptedAES) external" 
-];
+const PatientHandlerAddress = patientHandlerAddress;
+const patientHandlerAbi = patientHandlerABI;
+const patientAbi = patientABI;
 
 const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
