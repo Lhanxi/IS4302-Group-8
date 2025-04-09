@@ -3,6 +3,7 @@ import { ethers } from "ethers";
 import { Button, TextField } from "@mui/material";
 import { patientHandlerAddress } from "../utils/contractAddress";
 import { patientHandlerABI } from "../utils/contractABI";
+import { useNavigate } from "react-router-dom";
 
 // PatientHandler contract details
 const patientHandlerAbi = patientHandlerABI;
@@ -14,6 +15,8 @@ const DoctorPage = () => {
   const [error, setError] = useState(null);
   const [account, setAccount] = useState(null);
   const [provider, setProvider] = useState(null);
+
+  const navigate = useNavigate();
 
   // Function to get signer
   const getSigner = async () => {
@@ -117,6 +120,9 @@ const DoctorPage = () => {
       >
         {loading ? "Requesting..." : "Request Access"}
       </Button>
+
+      <button onClick={() => navigate('/uploadPatientData')}>Go to Upload Patient Data Page</button>
+      <button onClick={() => navigate('/display')}>Go to View Patient Data page</button>
       {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
     </div>
   );

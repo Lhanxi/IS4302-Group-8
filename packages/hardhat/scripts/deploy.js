@@ -66,6 +66,14 @@ async function main() {
   console.log("Doctor address:", doctor.address);
   await doctorOracle.addDoctor(doctor.address, "testDoctor");
 
+   // Deploy PatientHandler contract
+   const ResearchAccess = await hre.ethers.getContractFactory("ResearchAccess");
+   const researchAccess = await ResearchAccess.deploy();
+   await researchAccess.waitForDeployment();
+   const researchAccessAddress = await researchAccess.getAddress();
+   console.log("ResearchAccess deployed to:", researchAccessAddress);
+ 
+
   return {
     connectWalletTestAddress: contractAddress,
     patientHandlerAddress: patientHandlerAddress,
@@ -76,6 +84,7 @@ async function main() {
     insuranceCompanyOracleAddress: insuranceCompanyOracleAddress,
     insuranceCompanyHandlerAddress: insuranceCompanyHandlerAddress,
     authenticatedInsuranceCompanyAddress: insuranceCompany.address,
+    researchAccessAddress: researchAccessAddress, 
   };
 }
 

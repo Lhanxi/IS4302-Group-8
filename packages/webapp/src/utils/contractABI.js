@@ -4,6 +4,7 @@ const doctorABI = ["function getPublicKey() public view returns (string memory)"
 
 const doctorHandlerABI = [
     "function authenticateDoctor(address _doctor, string memory _publicKey) external",
+    "function updateAuthentication(address _doctor) external",
     "function isAuthenticated(address _doctor) view external returns (bool)",
     "function removeDoctor(address _doctor) public",
     "function getDoctorContractAddress(address _doctor) view public returns (address)"
@@ -24,9 +25,10 @@ const patientABI = [
     "function setDoctorEncryptedAES(address doctor, string memory encryptedAES) external",
     "function insuranceCompanyRequestAccess(address insuranceCompany) external",
     "function insuranceCompanyRevokeAccess(address insuranceCompany) public",
-    "function getInsuranceCompanyEncryptionKey(address insuranceCompany) external view returns (string memory)", 
+    "function getInsuranceContractAddress(address) view returns (address)", 
     "function setInsuranceCompanyEncryptedAES(address insuranceCompany, string memory encryptedAES) external",
     "function grantInsuranceCompanyAccess(address insuranceCompany, string memory encryptedKey) external",
+    "function checkInsuranceCompanyAccess(address insuranceCompany) external view returns (bool)",
     "function doctorRequestAccess(address doctor) external",
     "function setResearchAccess(bool researchAccess) external",
     "function getResearchAccess() public view returns (bool)"
@@ -35,7 +37,6 @@ const patientABI = [
 const patientHandlerABI = [
     "function registerPatient() external",
     "function requestAccess(address patient) external",
-    "function setPatientPublicKey(string memory publicKey) public",
     "function getPendingRequestForPatient(address patient) public view returns (address[] memory)",
     "function getPatientContract(address patient) public view returns (address)",
     "function insuranceCompanyRequestAccess(address patient) external",
@@ -49,9 +50,10 @@ const researchAccessABI = [
 
 const insuranceCompanyHandlerABI = [
     "function authenticateInsuranceCompany(address _insuranceCompany, string memory _publicKey) external",
+    "function updateAuthentication(address _insuranceCompany) external",
     "function isAuthenticated(address _insuranceCompany) view external returns (bool)",
     "function removeInsuranceCompany(address _insuranceCompany) public",
-    "function getDoctorContractAddress(address _insuranceCompany) view public returns (address)"
+    "function getInsuranceContractAddress(address _insuranceCompany) view public returns (address)"
 ]
 
 const insuranceCompanyABI = [

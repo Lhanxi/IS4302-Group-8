@@ -3,6 +3,7 @@ import { ethers } from "ethers";
 import forge from "node-forge";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { insuranceCompanyHandlerAddress } from "../utils/contractAddress";
 import { insuranceCompanyHandlerABI } from "../utils/contractABI";
 
@@ -11,11 +12,11 @@ const RegisterInsuranceCompany = () => {
   const [error, setError] = useState(null);
   const [account, setAccount] = useState(null);
   const [provider, setProvider] = useState(null);
-  const navigate = useNavigate();
   const [privateKey, setPrivateKey] = useState(null);
   const [publicKey, setPublicKey] = useState(null);
+  const [pin, setPin] = useState(""); // ✅ Added PIN state
+  const navigate = useNavigate();
 
-  // Function to get signer (used to send transactions)
   const getSigner = async () => {
     if (!window.ethereum) {
       alert("Please install MetaMask!");
@@ -24,9 +25,8 @@ const RegisterInsuranceCompany = () => {
 
     try {
       const newProvider = new ethers.BrowserProvider(window.ethereum);
-      await newProvider.send("eth_requestAccounts", []); // Request permission
+      await newProvider.send("eth_requestAccounts", []);
       setProvider(newProvider);
-
       const signer = await newProvider.getSigner();
       return signer;
     } catch (error) {
@@ -40,7 +40,6 @@ const RegisterInsuranceCompany = () => {
     console.log("Generating RSA key pair...");
     return new Promise((resolve) => {
       setTimeout(() => {
-        // Simulating async behavior
         const keyPair = forge.pki.rsa.generateKeyPair({ bits: 2048 });
         const privateKeyPem = forge.pki.privateKeyToPem(keyPair.privateKey);
         const publicKeyPem = forge.pki.publicKeyToPem(keyPair.publicKey);
@@ -49,8 +48,22 @@ const RegisterInsuranceCompany = () => {
         resolve({ privateKeyPem, publicKeyPem });
         setPrivateKey(privateKeyPem);
         setPublicKey(publicKeyPem);
-      }, 100); // Small delay to mimic async execution
+      }, 100);
     });
+  };
+
+  // ✅ Store PIN, private key and address in backend
+  const StoreAddressForm = async (address, pin, privateKey) => {
+    try {
+      const response = await axios.post("http://localhost:5001/store-address", {
+        address,
+        pin,
+        privateKeyP: privateKey,
+      });
+      console.log("Response from backend:", response.data);
+    } catch (err) {
+      console.error("Error storing address:", err);
+    }
   };
 
   useEffect(() => {
@@ -74,7 +87,6 @@ const RegisterInsuranceCompany = () => {
     initAccount();
   }, []);
 
-  // Function to handle authentication
   const registerInsuranceCompany = async () => {
     try {
       setLoading(true);
@@ -92,43 +104,46 @@ const RegisterInsuranceCompany = () => {
         return;
       }
 
-      // Get the signer from the provider
       const signer = await getSigner();
       if (!signer) {
         setLoading(false);
         return;
       }
 
-      console.log("Signer Address: ", signer.address); // In ethers v6, getAddress() is not needed
-
-      // Create contract instance with signer
-      const InsuranceCompanyHandlerContract = new ethers.Contract(
+      console.log("Signer Address: ", signer.address);
+      const insuranceCompanyHandlerContract = new ethers.Contract(
         insuranceCompanyHandlerAddress,
         insuranceCompanyHandlerABI,
         signer
       );
-      console.log(
-        "Insurance Company Handler Contract: ",
-        InsuranceCompanyHandlerContract
-      );
+      console.log("Insurance Handler Contract: ", insuranceCompanyHandlerContract);
 
-      const { privateKeyPem, publicKeyPem } = await generateRSAKeyPair();
-
-      //parse the data into the contract
-      const tx =
-        await InsuranceCompanyHandlerContract.authenticateInsuranceCompany(
-          signer.address,
-          publicKeyPem
-        );
+      let tx = await insuranceCompanyHandlerContract.updateAuthentication(signer.address);
       await tx.wait();
+      console.log("Synced authentication status with oracle.");
 
-      alert("Insurance company's authentication status updated!");
-      
-      const isAuthenticated = await InsuranceCompanyHandlerContract.isAuthenticated(signer.address);
+      let isAuthenticated = await insuranceCompanyHandlerContract.isAuthenticated(signer.address);
       if (isAuthenticated) {
         navigate("/insuranceCompany");
       } else {
-        return;
+        const { privateKeyPem, publicKeyPem } = await generateRSAKeyPair();
+
+        await StoreAddressForm(await signer.getAddress(), pin, privateKeyPem);
+
+        const tx = await insuranceCompanyHandlerContract.authenticateInsuranceCompany(
+          signer.address,
+          publicKeyPem
+        );
+        await tx.wait();
+
+        alert("Insurance Company's authentication status updated!");
+
+        isAuthenticated = await insuranceCompanyHandlerContract.isAuthenticated(signer.address);
+        if (isAuthenticated) {
+          navigate("/insuranceCompany");
+        } else {
+          return;
+        }
       }
     } catch (err) {
       console.error("Error registering insurance company:", err);
@@ -138,11 +153,18 @@ const RegisterInsuranceCompany = () => {
     }
   };
 
+  const handleButtonClick = () => {
+    const userPin = prompt("Please enter your PIN:");
+    setPin(userPin);
+  };
+
   return (
     <div style={{ marginLeft: "10px" }}>
       <h2>Register as a InsuranceCompany</h2>
 
-      <div style={{ display: "flex", gap: "10px" }}>
+      <Button onClick={handleButtonClick}>Enter PIN</Button> 
+
+      <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
         <Button
           variant="contained"
           color="primary"

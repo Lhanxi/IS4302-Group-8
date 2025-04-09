@@ -27,16 +27,18 @@ contract DoctorHandler {
     /// @param _doctor The wallet address of the doctor to authenticate.
     /// @param _publicKey The public key the doctor will use to encrypt patient's data.
     function authenticateDoctor(address _doctor, string memory _publicKey) external {
-        if (doctorContracts[_doctor] == address(0)) {
-            if (externalOracle.verifyDoctor(_doctor)) {
-                Doctor doctorContract = new Doctor(_publicKey);
-                doctorContracts[_doctor] = address(doctorContract);
-                emit DoctorAuthenticated(_doctor);
-            }
-        } else {
-            if (!externalOracle.verifyDoctor(_doctor)) {
-                this.removeDoctor(_doctor);
-            }
+        require(doctorContracts[_doctor] == address(0), "Doctor already authenticated");
+        require(externalOracle.verifyDoctor(_doctor) == true, "Doctor not verified by oracle");  
+        Doctor doctorContract = new Doctor(_publicKey);
+        doctorContracts[_doctor] = address(doctorContract);
+        emit DoctorAuthenticated(_doctor);
+    }
+
+    /// @notice Updates authentication status based on the latest oracle information
+    /// @param _doctor The wallet address that needs to have its authentication status updated.
+    function updateAuthentication(address _doctor) external {
+        if (!externalOracle.verifyDoctor(_doctor)) {
+            this.removeDoctor(_doctor);
         }
     }
 
@@ -52,7 +54,7 @@ contract DoctorHandler {
     /// @notice Removes authentication for the doctor.
     /// @param _doctor The wallet address of the doctor to remove authentication.
     function removeDoctor(address _doctor) public {
-        require(msg.sender == owner || msg.sender == _doctor, "Only owner or doctor in question can perform this function");
+        require(msg.sender == address(this), "Only contract can call this function");
         delete doctorContracts[_doctor];
         emit DoctorAuthenticationRemoved(_doctor);
     }

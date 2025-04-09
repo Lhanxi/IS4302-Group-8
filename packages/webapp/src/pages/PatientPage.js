@@ -128,11 +128,6 @@ const PatientPage = () => {
                 const doctorsList = await fetchPendingDoctors(patientHandlerContractInstance, accounts[0], signer);
                 console.log("Fetched pending doctors:", doctorsList);
                 setDoctors(doctorsList);
-
-                console.log("Fetching pending insurance company requests...");
-                const insuranceAgentsList = await fetchPendingInsuranceCompanies(patientHandlerContractInstance, accounts[0], signer);
-                console.log("Fetched pending company requests:", insuranceAgentsList);
-                setInsuranceAgents(insuranceAgentsList);
                 setLoading(false);
             } catch (err) {
                 console.error("Initialization error:", err);
@@ -143,41 +138,6 @@ const PatientPage = () => {
 
         init();
     }, []);
-
-    //stopped here
-    const fetchPendingInsuranceCompanies = async (patientHandlerContract, patientAddress, signer) => {
-        try {
-            console.log("Fetching pending insurance company requests for patient:", patientAddress);
-            const pendingInsuranceCompanies = await patientHandlerContract.getPendingRequestForPatient(patientAddress);
-            console.log("Pending insurance company requests retrieved:", pendingInsuranceCompanies);
-
-            console.log("Fetching patient contract address...");
-            const patientContractAddress = await patientHandlerContract.getPatientContract(await signer.getAddress());
-            console.log("Patient contract address:", patientContractAddress);
-            
-            console.log("Creating Patient contract instance...");
-            const patientContract = new ethers.Contract(patientContractAddress, patientAbi, signer);
-
-
-            const insuranceCompaniesList = [];
-            for (let address of pendingInsuranceCompanies) {
-                console.log("Checking access status for insurance company:", address);
-                
-                const isApproved = await patientContract.checkInsuranceCompanyAccess(address);
-                console.log(`Insurance Company: ${address}, Approved: ${isApproved}`);
-
-                insuranceCompaniesList.push({
-                    id: address,
-                    insuranceCompany: address,
-                    access: isApproved ? "Approved" : "Not Approved",
-                });
-            }
-            return insuranceCompaniesList;
-        } catch (err) {
-            console.error("Error fetching pending insurance companies:", err);
-            return [];
-        }
-    };
 
     const fetchPendingDoctors = async (patientHandlerContract, patientAddress, signer) => {
         try {
@@ -322,6 +282,11 @@ const PatientPage = () => {
 
     const handleRevokeAccess = async (doctor) => {
         await patientContract.revokeAccess(doctor);
+        setDoctors(
+            doctors.map((doc) =>
+              doc.doctor === selectedDoctor ? { ...doc, access: "Not Approved" } : doc
+            )
+          );
     };
 
     if (loading) return <div>Loading...</div>;
@@ -346,33 +311,12 @@ const PatientPage = () => {
             ) : (
                 <>
                 <button onClick={() => navigate('/patient-records')}>Go to Registration Page</button>
+                <button onClick={() => navigate('/patient-insurance')}>Go to Insurance Page</button>
 
                     <table border="1" style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr>
                                 <th>Doctor Address</th>
-                                <th>Access</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {doctors.map((doctor) => (
-                                <tr key={doctor.id}>
-                                    <td>{doctor.doctor}</td>
-                                    <td>{doctor.access}</td>
-                                    <td>
-                                        <button onClick={() => handleGrantAccessClick(doctor.doctor)}>Grant Access</button>
-                                        <button onClick={() => handleRevokeAccess(doctor.doctor)}>Revoke Access</button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    
-                    <table border="1" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead>
-                            <tr>
-                                <th>Insurance Company Address</th>
                                 <th>Access</th>
                                 <th>Action</th>
                             </tr>

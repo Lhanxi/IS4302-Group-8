@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import forge from 'node-forge';
 import { Button, CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { doctorHandlerAddress } from "../utils/contractAddress";
 import { doctorHandlerABI } from "../utils/contractABI";
 
@@ -13,11 +14,11 @@ const RegisterDoctor = () => {
   const [error, setError] = useState(null);
   const [account, setAccount] = useState(null);
   const [provider, setProvider] = useState(null);
+  const [privateKey, setPrivateKey] = useState(null);
+  const [publicKey, setPublicKey] = useState(null);
+  const [pin, setPin] = useState('');
   const navigate = useNavigate();
-const [privateKey, setPrivateKey] = useState(null);
-const [publicKey, setPublicKey] = useState(null);
 
-  // Function to get signer (used to send transactions)
   const getSigner = async () => {
     if (!window.ethereum) {
       alert("Please install MetaMask!");
@@ -26,7 +27,7 @@ const [publicKey, setPublicKey] = useState(null);
 
     try {
       const newProvider = new ethers.BrowserProvider(window.ethereum);
-      await newProvider.send("eth_requestAccounts", []); // Request permission
+      await newProvider.send("eth_requestAccounts", []);
       setProvider(newProvider);
 
       const signer = await newProvider.getSigner();
@@ -38,42 +39,54 @@ const [publicKey, setPublicKey] = useState(null);
     }
   };
 
-    const generateRSAKeyPair = async () => {
-      console.log("Generating RSA key pair...");
-      return new Promise((resolve) => {
-        setTimeout(() => { // Simulating async behavior
-          const keyPair = forge.pki.rsa.generateKeyPair({ bits: 2048 });
-          const privateKeyPem = forge.pki.privateKeyToPem(keyPair.privateKey);
-          const publicKeyPem = forge.pki.publicKeyToPem(keyPair.publicKey);
-          console.log("Generated publicKey:", publicKeyPem);
-          console.log("Generated privateKey:", privateKeyPem);
-          resolve({ privateKeyPem, publicKeyPem });
-          setPrivateKey(privateKeyPem);
-          setPublicKey(publicKeyPem);
-        }, 100); // Small delay to mimic async execution
+  const generateRSAKeyPair = async () => {
+    console.log("Generating RSA key pair...");
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const keyPair = forge.pki.rsa.generateKeyPair({ bits: 2048 });
+        const privateKeyPem = forge.pki.privateKeyToPem(keyPair.privateKey);
+        const publicKeyPem = forge.pki.publicKeyToPem(keyPair.publicKey);
+        console.log("Generated publicKey:", publicKeyPem);
+        console.log("Generated privateKey:", privateKeyPem);
+        resolve({ privateKeyPem, publicKeyPem });
+        setPrivateKey(privateKeyPem);
+        setPublicKey(publicKeyPem);
+      }, 100);
+    });
+  };
+
+  const StoreAddressForm = async (address, pin, privateKey) => {
+    try {
+      const response = await axios.post("http://localhost:5001/store-address", {
+        address,
+        pin,
+        privateKeyP: privateKey,
       });
-    };
+      console.log("Response from backend:", response.data);
+    } catch (err) {
+      console.error("Error storing address:", err);
+    }
+  };
 
   useEffect(() => {
-      const initAccount = async () => {
-        if (window.ethereum) {
-          try {
-            const [selectedAccount] = await window.ethereum.request({ method: 'eth_requestAccounts' });
-            if (selectedAccount) {
-              setAccount(selectedAccount);
-              console.log("Selected Account: ", selectedAccount);
-            }
-          } catch (err) {
-            console.error("Error requesting account:", err);
-            setError("Error accessing MetaMask. Please try again.");
+    const initAccount = async () => {
+      if (window.ethereum) {
+        try {
+          const [selectedAccount] = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          if (selectedAccount) {
+            setAccount(selectedAccount);
+            console.log("Selected Account: ", selectedAccount);
           }
+        } catch (err) {
+          console.error("Error requesting account:", err);
+          setError("Error accessing MetaMask. Please try again.");
         }
-      };
-  
-      initAccount();
-    }, []);
+      }
+    };
 
-  // Function to handle authentication
+    initAccount();
+  }, []);
+
   const registerDoctor = async () => {
     try {
       setLoading(true);
@@ -91,33 +104,41 @@ const [publicKey, setPublicKey] = useState(null);
         return;
       }
 
-      // Get the signer from the provider
       const signer = await getSigner();
       if (!signer) {
         setLoading(false);
         return;
       }
 
-      console.log("Signer Address: ", signer.address); // In ethers v6, getAddress() is not needed
-
-      // Create contract instance with signer
+      console.log("Signer Address: ", signer.address);
       const doctorHandlerContract = new ethers.Contract(doctorHandlerAddress, doctorHandlerAbi, signer);
       console.log("Doctor Handler Contract: ", doctorHandlerContract);
 
-      const { privateKeyPem, publicKeyPem } = await generateRSAKeyPair();
+      let tx = await doctorHandlerContract.updateAuthentication(signer.address);
+      await tx.wait();
+      console.log("synced authentication status with oracle.");
 
-      //parse the data into the contract
-      const tx = await doctorHandlerContract.authenticateDoctor(signer.address, publicKeyPem);
-      await tx.wait()
-      
-      alert("Doctor's authentication status updated!");
+      let isAuthenticated = await doctorHandlerContract.isAuthenticated(signer.address);
+      if (isAuthenticated) {
+        navigate("/doctor");
+      } else {
+        const { privateKeyPem, publicKeyPem } = await generateRSAKeyPair();
 
-      const isAuthenticated = await doctorHandlerContract.isAuthenticated(signer.address);
+        // 🔐 Store doctor data to MongoDB
+        await StoreAddressForm(await signer.getAddress(), pin, privateKeyPem);
+
+        const tx = await doctorHandlerContract.authenticateDoctor(signer.address, publicKeyPem);
+        await tx.wait();
+
+        alert("Doctor's authentication status updated!");
+
+        isAuthenticated = await doctorHandlerContract.isAuthenticated(signer.address);
         if (isAuthenticated) {
-            navigate("/doctor");
+          navigate("/doctor");
         } else {
-            return;
+          return;
         }
+      }
     } catch (err) {
       console.error("Error registering doctor:", err);
       setError("Authentication Rejected. Please try again later.");
@@ -126,21 +147,28 @@ const [publicKey, setPublicKey] = useState(null);
     }
   };
 
-  return (
-    <div style={{marginLeft: '10px'}}>
-      <h2>Register as a Doctor</h2>
+  const handleButtonClick = () => {
+    const userPin = prompt("Please enter your PIN:");
+    setPin(userPin);
+  };
 
-      <div style={{ display: 'flex', gap: '10px' }}>
+  return (
+    <div style={{ marginLeft: '10px' }}>
+      <h2>Register/Sign In as a Doctor</h2>
+      <Button onClick={handleButtonClick}>Enter PIN</Button>
+
+      <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
         <Button
-            variant="contained"
-            color="primary"
-            onClick={registerDoctor}
-            disabled={loading}
+          variant="contained"
+          color="primary"
+          onClick={registerDoctor}
+          disabled={loading}
         >
-        {loading ? <CircularProgress size={24} /> : "Register Doctor"}
+          {loading ? <CircularProgress size={24} /> : "Register Doctor"}
         </Button>
+
       </div>
-      {error && <p style={{ color: 'red'}}>{error}</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
     </div>
   );
 };

@@ -8,6 +8,7 @@
   "authenticatedDoctorAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
   "insuranceCompanyOracleAddress": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
   "insuranceCompanyHandlerAddress": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
-  "authenticatedInsuranceCompanyAddress": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+  "authenticatedInsuranceCompanyAddress": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+  "researchAccessAddress": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318"
 };
     

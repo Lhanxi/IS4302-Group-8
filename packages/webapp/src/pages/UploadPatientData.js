@@ -9,6 +9,7 @@ import { teal } from "@mui/material/colors";
 import encryptPatientData from "../utils/encryptPatientData";
 import { decryptAESKey } from "../utils/DecryptAES";
 import dataAnonymiser from "../utils/dataAnonymiser";
+import axios from 'axios';
 
 const ResearchAccessABI = researchAccessABI;
 const PatientHandlerAddress = patientHandlerAddress;
@@ -21,7 +22,7 @@ function UploadPatientData() {
     const [age, setAge] = useState("");
     const [healthRecords, setHealthRecords] = useState("");
     const [patientAccount, setPatientAccount] = useState("");  // New state for patient account
-    const [doctorPrivateKey, setDoctorPrivateKey] = useState(""); // New state for doctor private key
+    const [pin, setPin] = useState(""); // New state for doctor private key
     const [error, setError] = useState("");
     const [provider, setProvider] = useState(null);
     const [error1, setError1] = useState(null);
@@ -70,14 +71,14 @@ function UploadPatientData() {
     };
 
     // Function to handle doctor private key input and store it
-    const handleDoctorPrivateKeySubmit = () => {
-        if (!doctorPrivateKey) {
+    const handleDoctorPinSubmit = () => {
+        if (!pin) {
             setError("Doctor private key is required.");
             return;
         }
 
         // Store the doctor private key or submit it securely
-        console.log("Doctor Private Key set:", doctorPrivateKey);
+        console.log("Doctor Private Key set:", pin);
         setError("");  // Clear error on successful key set
     };
 
@@ -85,6 +86,18 @@ function UploadPatientData() {
         // Check if the length of the key is either 16 bytes (128 bits) or 32 bytes (256 bits)
         return aesKey.length === 16 || aesKey.length === 32;
     }
+
+    const getPrivateKey = async (ad, pin) => {
+        try {
+            const response = await axios.get(`http://localhost:5001/get-private-key/${ad}/${pin}`);
+            const privKey = response.data.privateKey;
+            console.log(privKey);
+            return privKey; // Returning the privateKey
+        } catch (error) {
+            console.error("Error fetching private key:", error);
+            throw error; // Optionally throw error if needed
+        }
+    };    
     
 
     const handleSubmit = async () => {
@@ -113,7 +126,16 @@ function UploadPatientData() {
             const encryptedAES = await patientContract.getDoctorEncryptionKey(await signer.getAddress());
             console.log("Encrypted AES Key:", encryptedAES);
     
-            const decryptedAESKey = await decryptAESKey(encryptedAES, doctorPrivateKey);
+            // Fetch doctor's address
+            const doctorAddress = await signer.getAddress();
+            console.log("Doctor address:", doctorAddress);
+
+            // Get doctor's private key from the backend
+            const doctorPrivateKeyFromDB = await getPrivateKey(doctorAddress, pin);
+            console.log("Retrieved doctor's private key from DB", doctorPrivateKeyFromDB);
+
+            // Decrypt AES key
+            const decryptedAESKey = await decryptAESKey(encryptedAES, doctorPrivateKeyFromDB);
             console.log("Decrypted AES Key:", decryptedAESKey);
 
             console.log("AES test", isValidAESKeyLength(decryptedAESKey));
@@ -168,7 +190,7 @@ function UploadPatientData() {
             const publicUpload =  await pinata.upload.public.file(file);
             console.log("Pinata upload response:", publicUpload);
 
-            const researchAccessInstance = await new ethers.Contract(ResearchAccessAddress, ResearchAccessABI, signer);
+            const researchAccessInstance = await new ethers.Contract(researchAccessAddress, researchAccessABI, signer);
             await researchAccessInstance.addCID(publicUpload.cid); 
             console.log("CID uploaded to the researchaccess contract:", publicUpload.cid);
 
@@ -196,13 +218,13 @@ function UploadPatientData() {
             <button onClick={handleAccountSubmit}>Set Account</button> {/* Button to submit and store the account */}
 
             {/* Doctor Private Key Section */}
-            <label>Doctor Private Key:</label>
+            <label>Enter PIN:</label>
             <input
                 type="text"
-                value={doctorPrivateKey}
-                onChange={(e) => setDoctorPrivateKey(e.target.value)}
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
             />
-            <button onClick={handleDoctorPrivateKeySubmit}>Set Doctor Private Key</button> {/* Button to submit and store the private key */}
+            <button onClick={handleDoctorPinSubmit}>Set Pin</button> {/* Button to submit and store the private key */}
 
             <label>Name:</label>
             <input type="text" value={patientName} onChange={(e) => setPatientName(e.target.value)} />

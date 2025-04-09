@@ -29,7 +29,7 @@ contract Patient {
         _;
     }
 
-    function grantAccess(address doctor, string memory encryptedKey) external {
+    function grantAccess(address doctor, string memory encryptedKey) external onlyOwner {
         doctorAccessList[doctor] = true;
         doctorEncryptedKeys[doctor] = encryptedKey; 
     }
@@ -40,7 +40,7 @@ contract Patient {
         doctorAccessList[doctor] = false;  //set the initial request as false
     }
 
-    function revokeAccess(address doctor) public {
+    function revokeAccess(address doctor) public onlyOwner {
         doctorAccessList[doctor] = false;
         //remove the AES key of the doctor
         doctorEncryptedKeys[doctor] = "";
@@ -75,11 +75,11 @@ contract Patient {
         patientPublicKey = publicKey;
     }
 
-    function setEncryptedAESKey(string memory encryptedAES) external {
+    function setEncryptedAESKey(string memory encryptedAES) external onlyOwner {
         patientAES = encryptedAES;
     }
 
-    function setDoctorEncryptedAES(address doctor, string memory encryptedAES) external {
+    function setDoctorEncryptedAES(address doctor, string memory encryptedAES) external onlyOwner {
         doctorEncryptedKeys[doctor] = encryptedAES;
     }
 
@@ -89,7 +89,7 @@ contract Patient {
         insuranceCompanyAccessList[insuranceCompany] = false;  //set the initial request as false
     }
 
-    function insuranceCompanyRevokeAccess(address insuranceCompany) public {
+    function insuranceCompanyRevokeAccess(address insuranceCompany) public onlyOwner {
         insuranceCompanyAccessList[insuranceCompany] = false;
         //remove the AES key of the insurance company
         insuranceCompanyEncryptedKeys[insuranceCompany] = "";
@@ -99,20 +99,20 @@ contract Patient {
         return insuranceCompanyEncryptedKeys[insuranceCompany];
     }
 
-    function setInsuranceCompanyEncryptedAES(address insuranceCompany, string memory encryptedAES) external {
+    function setInsuranceCompanyEncryptedAES(address insuranceCompany, string memory encryptedAES) external onlyOwner {
         insuranceCompanyEncryptedKeys[insuranceCompany] = encryptedAES;
     }
 
     function checkInsuranceCompanyAccess(address insuranceCompany) external view returns (bool) {
-        return doctorAccessList[insuranceCompany];
+        return insuranceCompanyAccessList[insuranceCompany];
     }
 
-    function grantInsuranceCompanyAccess(address insuranceCompany, string memory encryptedKey) external {
+    function grantInsuranceCompanyAccess(address insuranceCompany, string memory encryptedKey) external onlyOwner {
         insuranceCompanyAccessList[insuranceCompany] = true;
         insuranceCompanyEncryptedKeys[insuranceCompany] = encryptedKey; 
     }
 
-    function setResearchAccess(bool researchAccess) external  {
+    function setResearchAccess(bool researchAccess) external onlyOwner {
         allowResearchAccess = researchAccess; 
     }
 

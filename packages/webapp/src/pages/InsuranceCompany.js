@@ -3,6 +3,7 @@ import { ethers } from "ethers";
 import React, { useEffect, useState } from "react";
 import { patientHandlerAddress } from "../utils/contractAddress";
 import { patientHandlerABI } from "../utils/contractABI";
+import { useNavigate } from "react-router-dom";
 
 // PatientHandler contract details
 const patientHandlerAbi = patientHandlerABI;
@@ -14,6 +15,7 @@ const InsuranceCompanyPage = () => {
   const [error, setError] = useState(null);
   const [account, setAccount] = useState(null);
   const [provider, setProvider] = useState(null);
+  const navigate = useNavigate();
 
   // Function to get signer
   const getSigner = async () => {
@@ -82,7 +84,7 @@ const InsuranceCompanyPage = () => {
       );
       console.log("Contract instance:", contract);
 
-      const tx = await contract.requestAccess(patientAddress);
+      const tx = await contract.insuranceCompanyRequestAccess(patientAddress);
       console.log("Transaction Sent:", tx);
 
       await tx.wait(); // Wait for transaction confirmation
@@ -121,6 +123,8 @@ const InsuranceCompanyPage = () => {
       >
         {loading ? "Requesting..." : "Request Access"}
       </Button>
+
+      <button onClick={() => navigate('/display-insurance')}>Go to Insurance Page</button>
       {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
     </div>
   );
