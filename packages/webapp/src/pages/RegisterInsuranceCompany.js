@@ -123,8 +123,12 @@ const RegisterInsuranceCompany = () => {
       console.log("Synced authentication status with oracle.");
 
       let isAuthenticated = await insuranceCompanyHandlerContract.isAuthenticated(signer.address);
+
+
       if (isAuthenticated) {
         navigate("/insuranceCompany");
+        let add = await insuranceCompanyHandlerContract.getInsuranceContractAddress(signer.address);
+        console.log("add", add);
       } else {
         const { privateKeyPem, publicKeyPem } = await generateRSAKeyPair();
 
@@ -141,6 +145,8 @@ const RegisterInsuranceCompany = () => {
         isAuthenticated = await insuranceCompanyHandlerContract.isAuthenticated(signer.address);
         if (isAuthenticated) {
           navigate("/insuranceCompany");
+          let add = await insuranceCompanyHandlerContract.getInsuranceContractAddress(signer.address);
+          console.log("add", add);
         } else {
           return;
         }
@@ -160,7 +166,7 @@ const RegisterInsuranceCompany = () => {
 
   return (
     <div style={{ marginLeft: "10px" }}>
-      <h2>Register as a InsuranceCompany</h2>
+      <h2>Register/Sign In as a InsuranceCompany</h2>
 
       <Button onClick={handleButtonClick}>Enter PIN</Button> 
 
