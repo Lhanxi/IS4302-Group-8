@@ -16,11 +16,13 @@ function ResearchAccess() {
 
     const handleClick = async () => {
         console.log("Research Access button clicked");
+        console.log("research accesss", researchAccess);
         const cids = await researchAccess.getCIDs();
       
         const records = await Promise.all(
           cids.map(async (cid) => {
             const response = await fetch(`http://localhost:5001/fetch-ipfs?cid=${cid}`);
+            console.log("response", response);
             if (!response.ok) throw new Error("Failed to fetch patient data");
             return await response.json();
           })
