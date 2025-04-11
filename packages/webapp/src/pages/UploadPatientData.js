@@ -22,6 +22,7 @@ function UploadPatientData() {
     const [age, setAge] = useState("");
     const [healthRecords, setHealthRecords] = useState("");
     const [patientAccount, setPatientAccount] = useState("");  // New state for patient account
+    const [insuranceAccess, setInsuranceAccess] = useState(""); //for setting the insurance access
     const [pin, setPin] = useState(""); // New state for doctor private key
     const [error, setError] = useState("");
     const [provider, setProvider] = useState(null);
@@ -147,6 +148,7 @@ function UploadPatientData() {
                 healthRecords,
                 gender,
                 age,
+                insuranceAccess,
                 account: patientAccount,  // Include patient account in the data
                 timestamp: new Date().toISOString(),
             };
@@ -237,6 +239,9 @@ function UploadPatientData() {
 
             <label>Age:</label>
             <input type="text" value={age} onChange={(e) => setAge(e.target.value)} />
+
+            <label>Insurance Access:</label>
+            <input type="text" value={insuranceAccess} onChange={(e) => setInsuranceAccess(e.target.value)} />
 
             <label>Health Records:</label>
             <textarea value={healthRecords} onChange={(e) => setHealthRecords(e.target.value)} />

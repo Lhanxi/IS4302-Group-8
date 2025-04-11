@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import { patientHandlerAddress } from "../utils/contractAddress";
 import { patientABI, patientHandlerABI } from "../utils/contractABI";
 import decryptPatientData from "../utils/decryptPatientData";
-import axios from 'axios'; // ✅ fetch private key from backend
+import axios from 'axios'; 
 
 function DisplayPatientInsurancePage() {
     const [allDecryptedData, setAllDecryptedData] = useState([]);
@@ -15,7 +15,7 @@ function DisplayPatientInsurancePage() {
     const [provider, setProvider] = useState(null);
     const [error1, setError1] = useState(null);
     const [patientAccount, setPatientAccount] = useState("");
-    const [pin, setPin] = useState(""); // ✅ pin instead of private key
+    const [pin, setPin] = useState(""); 
 
     const patientHandlerAbi = patientHandlerABI;
     const patientAbi = patientABI;
@@ -74,7 +74,7 @@ function DisplayPatientInsurancePage() {
 
                 const encryptedData = await response.json();
                 const decryptedData = await decryptPatientData(encryptedData, decryptedAESKey);
-                if (decryptedData) {
+                if (decryptedData && decryptedData.insuranceAccess === "Yes") {
                     records.push(decryptedData);
                 }
             }
