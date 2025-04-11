@@ -132,6 +132,15 @@ function HomePage({ account, setAccount, provider, setProvider }) {
                                 </Button>
                             </Link>
                         </Box>
+
+                        {/* Link to RegisterPage */}
+                        <Box textAlign="center" mt={3}>
+                            <Link to="/research">
+                                <Button variant="contained" color="secondary" size="large">
+                                    Go to Research Access
+                                </Button>
+                            </Link>
+                        </Box>
                     </CardContent>
                 </Card>
             </Container>
