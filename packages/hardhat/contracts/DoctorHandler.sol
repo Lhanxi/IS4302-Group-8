@@ -54,7 +54,7 @@ contract DoctorHandler {
     /// @notice Removes authentication for the doctor.
     /// @param _doctor The wallet address of the doctor to remove authentication.
     function removeDoctor(address _doctor) public {
-        require(msg.sender == address(this), "Only contract can call this function");
+        require(msg.sender == address(this) || msg.sender == owner, "Only contract or owner can call this function");
         delete doctorContracts[_doctor];
         emit DoctorAuthenticationRemoved(_doctor);
     }
