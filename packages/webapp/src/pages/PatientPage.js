@@ -60,12 +60,15 @@ const PatientPage = () => {
         console.log("initial access", initialAccess); 
 
         if (initialAccess) {
-            await patientContract.setResearchAccess(false); 
+            const tx = await patientContract.setResearchAccess(false); 
+            await tx.wait(); 
         } else {
-            await patientContract.setResearchAccess(true); 
+            const tx = await patientContract.setResearchAccess(true); 
+            await tx.wait();
         }
         const result = await patientContract.getResearchAccess(); 
         console.log("after toggle", result);
+        await setAllowAccess(result);
     }
 
     useEffect(() => {
