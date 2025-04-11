@@ -9,13 +9,14 @@ This will store the CID for Web3Storage and manage the encryption keys for docto
 contract ResearchAccess {
     string[] public CID; // this is where the data is stored on the IFPS
 
-
+    /// @notice adds the new CID to the list of research CIDs.
+    /// @param newCID the new CID to be added to the list of research CIDs
     function addCID(string memory newCID) external {
         CID.push(newCID);
     }
 
+    /// @notice retrieves the list of research CIDs
     function getCIDs() external view returns (string[] memory) {
         return CID;
-    }
- 
+    } 
 }

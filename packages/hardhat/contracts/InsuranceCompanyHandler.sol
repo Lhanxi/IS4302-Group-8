@@ -65,6 +65,4 @@ contract InsuranceCompanyHandler {
     function getInsuranceContractAddress(address _insuranceCompany) view public returns (address) {
         return insuranceCompanyContracts[_insuranceCompany];
     }
-
-
 }

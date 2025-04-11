@@ -1,13 +1,30 @@
-import React, { useState, useEffect } from "react";
+import {
+  Button,
+  Card,
+  CardContent,
+  Container,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { ethers } from "ethers";
-import { Button, TextField } from "@mui/material";
-import { patientHandlerAddress } from "../utils/contractAddress";
-import { patientHandlerABI } from "../utils/contractABI";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { patientHandlerABI } from "../utils/contractABI";
+import { patientHandlerAddress } from "../utils/contractAddress";
 
 // PatientHandler contract details
 const patientHandlerAbi = patientHandlerABI;
 const PatientHandlerAddress = patientHandlerAddress;
+
+const theme = createTheme({
+  palette: {
+    mode: "dark",
+    primary: { main: "#00bcd4" },
+    background: { default: "#121212" },
+  },
+  typography: { fontFamily: "Roboto, sans-serif" },
+});
 
 const DoctorPage = () => {
   const [patientAddress, setPatientAddress] = useState("");
@@ -78,7 +95,11 @@ const DoctorPage = () => {
         return;
       }
 
-      const contract = new ethers.Contract(PatientHandlerAddress, patientHandlerAbi, signer);
+      const contract = new ethers.Contract(
+        PatientHandlerAddress,
+        patientHandlerAbi,
+        signer
+      );
       console.log("Contract instance:", contract);
 
       const tx = await contract.requestAccess(patientAddress);
@@ -101,30 +122,73 @@ const DoctorPage = () => {
   };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "400px", margin: "auto" }}>
-      <h2>Doctor Page</h2>
-      <TextField
-        label="Enter patient address"
-        variant="outlined"
-        fullWidth
-        value={patientAddress}
-        onChange={(e) => setPatientAddress(e.target.value)}
-        style={{ marginBottom: "10px" }}
-      />
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={requestAccess}
-        disabled={loading}
-        fullWidth
+    <ThemeProvider theme={theme}>
+      <Container
+        maxWidth="sm"
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          padding: 2,
+          borderRadius: 2,
+        }}
       >
-        {loading ? "Requesting..." : "Request Access"}
-      </Button>
-
-      <button onClick={() => navigate('/uploadPatientData')}>Go to Upload Patient Data Page</button>
-      <button onClick={() => navigate('/display')}>Go to View Patient Data page</button>
-      {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
-    </div>
+        <Card
+          sx={{
+            width: "100%",
+            p: 2,
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(10px)",
+            borderRadius: 3,
+            boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
+          }}
+        >
+          <CardContent>
+            <Typography variant="h4" align="center" gutterBottom>
+              Doctor Page
+            </Typography>
+            <TextField
+              label="Enter patient address"
+              variant="outlined"
+              fullWidth
+              value={patientAddress}
+              onChange={(e) => setPatientAddress(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={requestAccess}
+              disabled={loading}
+              fullWidth
+            >
+              {loading ? "Requesting..." : "Request Access"}
+            </Button>
+            <Button
+              onClick={() => navigate("/uploadPatientData")}
+              fullWidth
+              sx={{ mt: 2 }}
+            >
+              Go to Upload Patient Data Page
+            </Button>
+            <Button
+              onClick={() => navigate("/display")}
+              fullWidth
+              sx={{ mt: 2 }}
+            >
+              Go to View Patient Data Page
+            </Button>
+            {error && (
+              <Typography color="error" sx={{ mt: 2 }}>
+                {error}
+              </Typography>
+            )}
+          </CardContent>
+        </Card>
+      </Container>
+    </ThemeProvider>
   );
 };
 

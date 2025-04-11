@@ -1,13 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { ethers } from 'ethers';
-import forge from 'node-forge';
-import { Button, CircularProgress } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { doctorHandlerAddress } from "../utils/contractAddress";
+import {
+  Button,
+  Card,
+  CardContent,
+  CircularProgress,
+  Container,
+  createTheme,
+  ThemeProvider,
+  Typography,
+} from "@mui/material";
+import axios from "axios";
+import { ethers } from "ethers";
+import forge from "node-forge";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { doctorHandlerABI } from "../utils/contractABI";
+import { doctorHandlerAddress } from "../utils/contractAddress";
 
 const doctorHandlerAbi = doctorHandlerABI;
+
+const theme = createTheme({
+  palette: {
+    mode: "dark",
+    primary: { main: "#00bcd4" },
+    background: { default: "#121212" },
+  },
+  typography: { fontFamily: "Roboto, sans-serif" },
+});
 
 const RegisterDoctor = () => {
   const [loading, setLoading] = useState(false);
@@ -16,7 +34,7 @@ const RegisterDoctor = () => {
   const [provider, setProvider] = useState(null);
   const [privateKey, setPrivateKey] = useState(null);
   const [publicKey, setPublicKey] = useState(null);
-  const [pin, setPin] = useState('');
+  const [pin, setPin] = useState("");
   const navigate = useNavigate();
 
   const getSigner = async () => {
@@ -72,7 +90,9 @@ const RegisterDoctor = () => {
     const initAccount = async () => {
       if (window.ethereum) {
         try {
-          const [selectedAccount] = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          const [selectedAccount] = await window.ethereum.request({
+            method: "eth_requestAccounts",
+          });
           if (selectedAccount) {
             setAccount(selectedAccount);
             console.log("Selected Account: ", selectedAccount);
@@ -111,14 +131,20 @@ const RegisterDoctor = () => {
       }
 
       console.log("Signer Address: ", signer.address);
-      const doctorHandlerContract = new ethers.Contract(doctorHandlerAddress, doctorHandlerAbi, signer);
+      const doctorHandlerContract = new ethers.Contract(
+        doctorHandlerAddress,
+        doctorHandlerAbi,
+        signer
+      );
       console.log("Doctor Handler Contract: ", doctorHandlerContract);
 
       let tx = await doctorHandlerContract.updateAuthentication(signer.address);
       await tx.wait();
       console.log("synced authentication status with oracle.");
 
-      let isAuthenticated = await doctorHandlerContract.isAuthenticated(signer.address);
+      let isAuthenticated = await doctorHandlerContract.isAuthenticated(
+        signer.address
+      );
       if (isAuthenticated) {
         navigate("/doctor");
       } else {
@@ -127,12 +153,17 @@ const RegisterDoctor = () => {
         // 🔐 Store doctor data to MongoDB
         await StoreAddressForm(await signer.getAddress(), pin, privateKeyPem);
 
-        const tx = await doctorHandlerContract.authenticateDoctor(signer.address, publicKeyPem);
+        const tx = await doctorHandlerContract.authenticateDoctor(
+          signer.address,
+          publicKeyPem
+        );
         await tx.wait();
 
         alert("Doctor's authentication status updated!");
 
-        isAuthenticated = await doctorHandlerContract.isAuthenticated(signer.address);
+        isAuthenticated = await doctorHandlerContract.isAuthenticated(
+          signer.address
+        );
         if (isAuthenticated) {
           navigate("/doctor");
         } else {
@@ -153,23 +184,49 @@ const RegisterDoctor = () => {
   };
 
   return (
-    <div style={{ marginLeft: '10px' }}>
-      <h2>Register/Sign In as a Doctor</h2>
-      <Button onClick={handleButtonClick}>Enter PIN</Button>
-
-      <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={registerDoctor}
-          disabled={loading}
+    <ThemeProvider theme={theme}>
+      <Container
+        maxWidth="sm"
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          padding: 2,
+          borderRadius: 2,
+        }}
+      >
+        <Card
+          sx={{
+            width: "100%",
+            p: 2,
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(10px)",
+            borderRadius: 3,
+            boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
+          }}
         >
-          {loading ? <CircularProgress size={24} /> : "Register Doctor"}
-        </Button>
-
-      </div>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-    </div>
+          <CardContent>
+            <Typography variant="h4" align="center" gutterBottom>
+              Register/Sign In as a Doctor
+            </Typography>
+            <Button onClick={handleButtonClick}>Enter PIN</Button>
+            <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={registerDoctor}
+                disabled={loading}
+              >
+                {loading ? <CircularProgress size={24} /> : "Register Doctor"}
+              </Button>
+            </div>
+            {error && <Typography color="error">{error}</Typography>}
+          </CardContent>
+        </Card>
+      </Container>
+    </ThemeProvider>
   );
 };
 

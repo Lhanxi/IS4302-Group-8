@@ -8,6 +8,7 @@ contract InsuranceCompany {
         publicKey = _publicKey;
     }
 
+    /// @notice Retrieves the insurance company's public key
     function getPublicKey() public view returns (string memory) {
         return publicKey;
     }

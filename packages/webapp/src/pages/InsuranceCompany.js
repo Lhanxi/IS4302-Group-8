@@ -1,9 +1,26 @@
-import { Button, TextField } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  Container,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { ethers } from "ethers";
 import React, { useEffect, useState } from "react";
-import { patientHandlerAddress } from "../utils/contractAddress";
-import { patientHandlerABI } from "../utils/contractABI";
 import { useNavigate } from "react-router-dom";
+import { patientHandlerABI } from "../utils/contractABI";
+import { patientHandlerAddress } from "../utils/contractAddress";
+
+const theme = createTheme({
+  palette: {
+    mode: "dark",
+    primary: { main: "#00bcd4" },
+    background: { default: "#121212" },
+  },
+  typography: { fontFamily: "Roboto, sans-serif" },
+});
 
 // PatientHandler contract details
 const patientHandlerAbi = patientHandlerABI;
@@ -104,29 +121,66 @@ const InsuranceCompanyPage = () => {
   };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "400px", margin: "auto" }}>
-      <h2>Insurance Company Page</h2>
-      <TextField
-        label="Enter patient address"
-        variant="outlined"
-        fullWidth
-        value={patientAddress}
-        onChange={(e) => setPatientAddress(e.target.value)}
-        style={{ marginBottom: "10px" }}
-      />
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={requestAccess}
-        disabled={loading}
-        fullWidth
+    <ThemeProvider theme={theme}>
+      <Container
+        maxWidth="sm"
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          padding: 2,
+          borderRadius: 2,
+        }}
       >
-        {loading ? "Requesting..." : "Request Access"}
-      </Button>
-
-      <button onClick={() => navigate('/display-insurance')}>Go to Insurance Page</button>
-      {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
-    </div>
+        <Card
+          sx={{
+            width: "100%",
+            p: 2,
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(10px)",
+            borderRadius: 3,
+            boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
+          }}
+        >
+          <CardContent>
+            <Typography variant="h4" align="center" gutterBottom>
+              Insurance Company Page
+            </Typography>
+            <TextField
+              label="Enter patient address"
+              variant="outlined"
+              fullWidth
+              value={patientAddress}
+              onChange={(e) => setPatientAddress(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={requestAccess}
+              disabled={loading}
+              fullWidth
+            >
+              {loading ? "Requesting..." : "Request Access"}
+            </Button>
+            <Button
+              onClick={() => navigate("/display-insurance")}
+              fullWidth
+              sx={{ mt: 2 }}
+            >
+              Go to Insurance Page
+            </Button>
+            {error && (
+              <Typography color="error" sx={{ mt: 2 }}>
+                {error}
+              </Typography>
+            )}
+          </CardContent>
+        </Card>
+      </Container>
+    </ThemeProvider>
   );
 };
 

@@ -1,11 +1,29 @@
-import { Button, CircularProgress } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  CircularProgress,
+  Container,
+  createTheme,
+  ThemeProvider,
+  Typography,
+} from "@mui/material";
+import axios from "axios";
 import { ethers } from "ethers";
 import forge from "node-forge";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { insuranceCompanyHandlerAddress } from "../utils/contractAddress";
 import { insuranceCompanyHandlerABI } from "../utils/contractABI";
+import { insuranceCompanyHandlerAddress } from "../utils/contractAddress";
+
+const theme = createTheme({
+  palette: {
+    mode: "dark",
+    primary: { main: "#00bcd4" },
+    background: { default: "#121212" },
+  },
+  typography: { fontFamily: "Roboto, sans-serif" },
+});
 
 const RegisterInsuranceCompany = () => {
   const [loading, setLoading] = useState(false);
@@ -116,36 +134,50 @@ const RegisterInsuranceCompany = () => {
         insuranceCompanyHandlerABI,
         signer
       );
-      console.log("Insurance Handler Contract: ", insuranceCompanyHandlerContract);
+      console.log(
+        "Insurance Handler Contract: ",
+        insuranceCompanyHandlerContract
+      );
 
-      let tx = await insuranceCompanyHandlerContract.updateAuthentication(signer.address);
+      let tx = await insuranceCompanyHandlerContract.updateAuthentication(
+        signer.address
+      );
       await tx.wait();
       console.log("Synced authentication status with oracle.");
 
-      let isAuthenticated = await insuranceCompanyHandlerContract.isAuthenticated(signer.address);
-
+      let isAuthenticated =
+        await insuranceCompanyHandlerContract.isAuthenticated(signer.address);
 
       if (isAuthenticated) {
         navigate("/insuranceCompany");
-        let add = await insuranceCompanyHandlerContract.getInsuranceContractAddress(signer.address);
+        let add =
+          await insuranceCompanyHandlerContract.getInsuranceContractAddress(
+            signer.address
+          );
         console.log("add", add);
       } else {
         const { privateKeyPem, publicKeyPem } = await generateRSAKeyPair();
 
         await StoreAddressForm(await signer.getAddress(), pin, privateKeyPem);
 
-        const tx = await insuranceCompanyHandlerContract.authenticateInsuranceCompany(
-          signer.address,
-          publicKeyPem
-        );
+        const tx =
+          await insuranceCompanyHandlerContract.authenticateInsuranceCompany(
+            signer.address,
+            publicKeyPem
+          );
         await tx.wait();
 
         alert("Insurance Company's authentication status updated!");
 
-        isAuthenticated = await insuranceCompanyHandlerContract.isAuthenticated(signer.address);
+        isAuthenticated = await insuranceCompanyHandlerContract.isAuthenticated(
+          signer.address
+        );
         if (isAuthenticated) {
           navigate("/insuranceCompany");
-          let add = await insuranceCompanyHandlerContract.getInsuranceContractAddress(signer.address);
+          let add =
+            await insuranceCompanyHandlerContract.getInsuranceContractAddress(
+              signer.address
+            );
           console.log("add", add);
         } else {
           return;
@@ -165,27 +197,53 @@ const RegisterInsuranceCompany = () => {
   };
 
   return (
-    <div style={{ marginLeft: "10px" }}>
-      <h2>Register/Sign In as a InsuranceCompany</h2>
-
-      <Button onClick={handleButtonClick}>Enter PIN</Button> 
-
-      <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={registerInsuranceCompany}
-          disabled={loading}
+    <ThemeProvider theme={theme}>
+      <Container
+        maxWidth="sm"
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          padding: 2,
+          borderRadius: 2,
+        }}
+      >
+        <Card
+          sx={{
+            width: "100%",
+            p: 2,
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(10px)",
+            borderRadius: 3,
+            boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
+          }}
         >
-          {loading ? (
-            <CircularProgress size={24} />
-          ) : (
-            "Register Insurance Company"
-          )}
-        </Button>
-      </div>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-    </div>
+          <CardContent>
+            <Typography variant="h4" align="center" gutterBottom>
+              Register/Sign In as an Insurance Company
+            </Typography>
+            <Button onClick={handleButtonClick}>Enter PIN</Button>
+            <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={registerInsuranceCompany}
+                disabled={loading}
+              >
+                {loading ? (
+                  <CircularProgress size={24} />
+                ) : (
+                  "Register Insurance Company"
+                )}
+              </Button>
+            </div>
+            {error && <Typography color="error">{error}</Typography>}
+          </CardContent>
+        </Card>
+      </Container>
+    </ThemeProvider>
   );
 };
 

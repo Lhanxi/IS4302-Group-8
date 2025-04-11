@@ -19,6 +19,7 @@ contract PatientHandler {
     event PatientRegistered(address indexed patient, address contractAddress);
     event AccessRequested(address indexed patient, address indexed doctor);
 
+    /// @notice Registers the transaction sender as a patient if the transaction sender has not already registered
     function registerPatient() external {
         require(patientContracts[msg.sender] == address(0), "Patient already registered");
 
@@ -31,7 +32,8 @@ contract PatientHandler {
         emit PatientRegistered(msg.sender, deployedAddress);
     }
 
-
+    /// @notice Allows doctor to request access to a specific patient
+    /// @param patient The wallet address of the patient
     function requestAccess(address patient) external {
         require(patientContracts[patient] != address(0), "Patient is not registered");
         require(!accessRequests[patient][msg.sender], "Access request already sent");
@@ -47,14 +49,20 @@ contract PatientHandler {
         emit AccessRequested(patient, msg.sender);
     }
 
+    /// @notice Gets list of doctors who have requested for access to the patient's medical records
+    /// @param patient The wallet address of the patient
     function getPendingRequestForPatient(address patient) public view returns (address[] memory) {
         return pendingDoctors[patient]; // Return list of doctors who requested access
     }
 
+    /// @notice Gets the address of the patient contract that is owned by the given patient wallet address
+    /// @param patient The wallet address of the patient
     function getPatientContract(address patient) public view returns (address) {
         return patientContracts[patient];
     }
 
+    /// @notice Allows insurance company to request access to a specific patient
+    /// @param patient The wallet address of the patient
     function insuranceCompanyRequestAccess(address patient) external {
         require(patientContracts[patient] != address(0), "Patient is not registered");
         require(!insuranceCompanyAccessRequests[patient][msg.sender], "Access request already sent");
@@ -69,7 +77,9 @@ contract PatientHandler {
 
         emit InsuranceCompanyAccessRequested(patient, msg.sender);
     }
-    
+
+    /// @notice Gets list of insurance companies who have requested for access to the patient's medical records
+    /// @param patient The wallet address of the patient
     function getInsuranceCompanyPendingRequestForPatient(address patient) public view returns (address[] memory) {
         return pendingInsuranceCompanies[patient]; // Return list of doctors who requested access
     }

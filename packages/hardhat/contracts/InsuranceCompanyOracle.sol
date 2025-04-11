@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 contract InsuranceCompanyOracle {
     address public owner;
      
-    // Mapping from a doctor's address to their name.
+    // Mapping from a insurance company's address to their name.
     mapping(address => string) public insuranceCompanyName;
  
     // Events for logging changes.
