@@ -69,7 +69,6 @@ contract PatientHandler {
 
         emit InsuranceCompanyAccessRequested(patient, msg.sender);
     }
-
     
     function getInsuranceCompanyPendingRequestForPatient(address patient) public view returns (address[] memory) {
         return pendingInsuranceCompanies[patient]; // Return list of doctors who requested access

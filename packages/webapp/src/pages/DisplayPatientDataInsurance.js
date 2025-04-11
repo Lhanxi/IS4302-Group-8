@@ -1,112 +1,71 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import forge from "node-forge";
 import { decryptAESKey } from "../utils/DecryptAES";
 import { ethers } from 'ethers';
-import { PatientHandlerAddress } from "../utils/contractAddress";
+import { patientHandlerAddress } from "../utils/contractAddress";
 import { patientABI, patientHandlerABI } from "../utils/contractABI";
 import decryptPatientData from "../utils/decryptPatientData";
+import axios from 'axios'; 
 
 function DisplayPatientInsurancePage() {
-    // const { cid } = useParams();
     const [allDecryptedData, setAllDecryptedData] = useState([]);
     const [patientData, setPatientData] = useState(null);
     const [error, setError] = useState("");
-    const [privateKey, setPrivateKey] = useState(""); // State for the doctor's private key
-    const [decryptedData, setDecryptedData] = useState(null); // State to hold decrypted patient data
+    const [decryptedData, setDecryptedData] = useState(null);
     const [provider, setProvider] = useState(null);
     const [error1, setError1] = useState(null);
-    const [patientAccount, setPatientAccount] = useState(""); // State for patient account input
+    const [patientAccount, setPatientAccount] = useState("");
+    const [pin, setPin] = useState(""); 
 
-    const patientHandlerAbi = patientHandlerABI
-
-    const patientAbi = patientABI
-
+    const patientHandlerAbi = patientHandlerABI;
+    const patientAbi = patientABI;
 
     const getSigner = async () => {
         if (!window.ethereum) {
-            console.log("MetaMask not installed");
             alert("Please install MetaMask!");
             return null;
         }
         try {
-            console.log("Requesting MetaMask accounts...");
             const newProvider = new ethers.BrowserProvider(window.ethereum);
             await newProvider.send("eth_requestAccounts", []);
             setProvider(newProvider);
-            const signer = await newProvider.getSigner();
-            console.log("Signer obtained:", signer);
-            return signer;
+            return await newProvider.getSigner();
         } catch (error) {
             console.error("Error creating signer:", error);
             setError1("Error creating signer. Please check MetaMask.");
             return null;
         }
     };
-    /*
-useEffect(() => {
-  const fetchData = async () => {
-      if (!cid) {
-          setError("CID not provided");
-          return;
-      }
 
-      try {
-          const response = await fetch(`http://localhost:5001/fetch-ipfs?cid=${cid}`);
-          if (!response.ok) throw new Error("Failed to fetch patient data");
-
-          const data = await response.json();
-          setPatientData(data);
-      } catch (err) {
-          console.error("Fetch error:", err);
-          setError(err.message);
-      }
-  };
-
-  fetchData();
-}, [cid]);
-*/
-
-    // Function to handle private key input
-    const handlePrivateKeyChange = (event) => {
-        setPrivateKey(event.target.value);
+    const getPrivateKey = async (address, pin) => {
+        try {
+            const response = await axios.get(`http://localhost:5001/get-private-key/${address}/${pin}`);
+            return response.data.privateKey;
+        } catch (err) {
+            console.error("Failed to fetch private key:", err);
+            throw new Error("Private key fetch failed.");
+        }
     };
 
-    // Function to handle patient account input
-    const handlePatientAccountChange = (event) => {
-        setPatientAccount(event.target.value);
-    };
-
-    // Function to handle decryption after private key is entered
     const handleDecryption = async () => {
-        if (!privateKey || !patientAccount) {
-            setError("Please provide patient data, a private key, and a patient account.");
+        if (!pin || !patientAccount) {
+            setError("Please provide your PIN and the patient's account.");
             return;
         }
+
         try {
             const signer = await getSigner();
-            console.log("Signer obtained:", signer);
+            const insuranceAddress = await signer.getAddress();
+            const privKey = await getPrivateKey(insuranceAddress, pin);
 
-            const patientHandler = await new ethers.Contract(PatientHandlerAddress, patientHandlerAbi, signer);
-            console.log("Patient handler contract:", patientHandler);
-
+            const patientHandler = new ethers.Contract(patientHandlerAddress, patientHandlerAbi, signer);
             const patientContractAddress = await patientHandler.getPatientContract(patientAccount);
-            console.log("Patient contract address:", patientContractAddress);
+            const patientContract = new ethers.Contract(patientContractAddress, patientAbi, signer);
 
-            const patientContract = await new ethers.Contract(patientContractAddress, patientAbi, signer);
-            console.log("Patient contract:", patientContract);
+            const encryptedAESKey = await patientContract.getInsuranceCompanyEncryptionKey(insuranceAddress);
+            const decryptedAESKey = await decryptAESKey(encryptedAESKey, privKey);
 
-            const encryptedAESKey = await patientContract.getInsuranceCompanyEncryptionKey(await signer.getAddress());
-            console.log("Encrypted AES Key:", encryptedAESKey);
-
-            // Step 1: Decrypt the AES key using RSA private key
-            const decryptedAESKey = await decryptAESKey(encryptedAESKey, privateKey);
-            console.log("Decrypted AES Key:", decryptedAESKey);
-
-            // Step 2: Decrypt the patient data using AES key
             const cids = await patientContract.getCIDs();
-            console.log("All CIDs:", cids);
-
             const records = [];
 
             for (const cid of cids) {
@@ -115,7 +74,7 @@ useEffect(() => {
 
                 const encryptedData = await response.json();
                 const decryptedData = await decryptPatientData(encryptedData, decryptedAESKey);
-                if (decryptedData) {
+                if (decryptedData && decryptedData.insuranceAccess === "Yes") {
                     records.push(decryptedData);
                 }
             }
@@ -127,34 +86,32 @@ useEffect(() => {
         }
     };
 
-
-
     return (
         <div>
             <h2>Patient Data</h2>
             {error && <p style={{ color: "red" }}>{error}</p>}
 
-            {/* Input for doctor's private key */}
-            <div>
-                <label htmlFor="privateKey">Enter Insurance Company's Private Key:</label>
-                <textarea
-                    id="privateKey"
-                    rows="5"
-                    cols="50"
-                    value={privateKey}
-                    onChange={handlePrivateKeyChange}
-                />
-            </div>
-
-            {/* Input for patient's account */}
+            {/* Patient account input */}
             <div>
                 <label htmlFor="patientAccount">Enter Patient's Account:</label>
                 <input
                     type="text"
                     id="patientAccount"
                     value={patientAccount}
-                    onChange={handlePatientAccountChange}
+                    onChange={(e) => setPatientAccount(e.target.value)}
                     placeholder="Enter patient account"
+                />
+            </div>
+
+            {/* PIN input */}
+            <div>
+                <label htmlFor="pin">Enter Your PIN:</label>
+                <input
+                    type="password"
+                    id="pin"
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value)}
+                    placeholder="Enter your PIN"
                 />
             </div>
 
@@ -175,7 +132,6 @@ useEffect(() => {
                     ))}
                 </div>
             )}
-
         </div>
     );
 }

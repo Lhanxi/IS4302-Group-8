@@ -22,6 +22,7 @@ function UploadPatientData() {
     const [age, setAge] = useState("");
     const [healthRecords, setHealthRecords] = useState("");
     const [patientAccount, setPatientAccount] = useState("");  // New state for patient account
+    const [insuranceAccess, setInsuranceAccess] = useState(""); //for setting the insurance access
     const [pin, setPin] = useState(""); // New state for doctor private key
     const [error, setError] = useState("");
     const [provider, setProvider] = useState(null);
@@ -147,6 +148,7 @@ function UploadPatientData() {
                 healthRecords,
                 gender,
                 age,
+                insuranceAccess,
                 account: patientAccount,  // Include patient account in the data
                 timestamp: new Date().toISOString(),
             };
@@ -180,22 +182,25 @@ function UploadPatientData() {
             //console.log("Navigation to display page with CID:", upload.cid);
 
             //anonymise the data and then store it onto the CID 
-            const anonymisedData = dataAnonymiser(patientData); 
+            const anonymisedData = await dataAnonymiser(patientData); 
             console.log("anonymised Data", anonymisedData); 
 
-            const anonymisedJson = JSON.stringify(anonymisedData); // Convert to string
-            const blob = new Blob([anonymisedJson], { type: "application/json" }); // Create a Blob
-            const file = new File([blob], "anonymised-data.json", { type: "application/json" }); // Create a File object
+            const publicResearchAccess = await patientContract.getResearchAccess(); 
 
-            const publicUpload =  await pinata.upload.public.file(file);
-            console.log("Pinata upload response:", publicUpload);
-
-            const researchAccessInstance = await new ethers.Contract(researchAccessAddress, researchAccessABI, signer);
-            await researchAccessInstance.addCID(publicUpload.cid); 
-            console.log("CID uploaded to the researchaccess contract:", publicUpload.cid);
-
+            if (publicResearchAccess) {
+                const anonymisedJson = JSON.stringify(anonymisedData); // Convert to string
+                const blob = new Blob([anonymisedJson], { type: "application/json" }); // Create a Blob
+                const file = new File([blob], "anonymised-data.json", { type: "application/json" }); // Create a File object
+    
+                const publicUpload =  await pinata.upload.public.file(file);
+                console.log("Pinata upload response:", publicUpload);
+    
+                const researchAccessInstance = await new ethers.Contract(researchAccessAddress, researchAccessABI, signer);
+                await researchAccessInstance.addCID(publicUpload.cid); 
+                console.log("CID uploaded to the researchaccess contract:", publicUpload.cid);    
+            }
         } catch (error) {
-            // Log detailed error information
+            // Log etailed error information
             console.error("Upload failed:", error);
             setError("File upload failed. Please try again.");
         }
@@ -237,6 +242,9 @@ function UploadPatientData() {
 
             <label>Age:</label>
             <input type="text" value={age} onChange={(e) => setAge(e.target.value)} />
+
+            <label>Insurance Access:</label>
+            <input type="text" value={insuranceAccess} onChange={(e) => setInsuranceAccess(e.target.value)} />
 
             <label>Health Records:</label>
             <textarea value={healthRecords} onChange={(e) => setHealthRecords(e.target.value)} />
