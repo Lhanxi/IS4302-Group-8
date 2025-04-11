@@ -25,7 +25,7 @@ const patientABI = [
     "function setDoctorEncryptedAES(address doctor, string memory encryptedAES) external",
     "function insuranceCompanyRequestAccess(address insuranceCompany) external",
     "function insuranceCompanyRevokeAccess(address insuranceCompany) public",
-    "function getInsuranceContractAddress(address) view returns (address)", 
+    "function getInsuranceCompanyEncryptionKey(address insuranceCompany) external view returns (string memory)", 
     "function setInsuranceCompanyEncryptedAES(address insuranceCompany, string memory encryptedAES) external",
     "function grantInsuranceCompanyAccess(address insuranceCompany, string memory encryptedKey) external",
     "function checkInsuranceCompanyAccess(address insuranceCompany) external view returns (bool)",

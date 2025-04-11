@@ -12,6 +12,7 @@ import ResearchAccess from "./pages/ResearchAccess";
 import InsuranceCompanyPage from "./pages/InsuranceCompany"
 import RegisterInsuranceCompany from "./pages/RegisterInsuranceCompany"
 import PatientInsurancePage from "./pages/PatientInsurancePage";
+import DisplayPatientInsurancePage from "./pages/DisplayPatientDataInsurance";
 
 function App() {
     const [account, setAccount] = useState(null);
@@ -68,6 +69,11 @@ function App() {
                 <Route 
                     path="patient-insurance"
                     element={<PatientInsurancePage /> } />
+
+                <Route 
+                    path="/display-insurance" 
+                    element={<DisplayPatientInsurancePage />} /> 
+                    
             </Routes>
     );
 }
