@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import forge from "node-forge";
 import { decryptAESKey } from "../utils/DecryptAES";
 import { ethers } from 'ethers';
-import { PatientHandlerAddress } from "../utils/contractAddress";
+import { patientHandlerAddress } from "../utils/contractAddress";
 import { patientABI, patientHandlerABI } from "../utils/contractABI";
 import decryptPatientData from "../utils/decryptPatientData";
 
@@ -87,7 +87,7 @@ useEffect(() => {
             const signer = await getSigner();
             console.log("Signer obtained:", signer);
 
-            const patientHandler = await new ethers.Contract(PatientHandlerAddress, patientHandlerAbi, signer);
+            const patientHandler = await new ethers.Contract(patientHandlerAddress, patientHandlerAbi, signer);
             console.log("Patient handler contract:", patientHandler);
 
             const patientContractAddress = await patientHandler.getPatientContract(patientAccount);
