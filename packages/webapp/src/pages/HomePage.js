@@ -4,7 +4,7 @@ import { CONTRACT_ADDRESS, CONTRACT_ABI } from "../contractConfig";
 import { Container, Box, Typography, Button, Card, CardContent } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { connectWallet } from "../utils/connectWallet";
-import { Link } from "react-router-dom"; // Import Link for navigation
+import { Link } from "react-router-dom"; 
 
 function HomePage({ account, setAccount, provider, setProvider }) {
     const [contract, setContract] = React.useState(null);
@@ -133,7 +133,7 @@ function HomePage({ account, setAccount, provider, setProvider }) {
                             </Link>
                         </Box>
 
-                        {/* Link to RegisterPage */}
+                        {/* Link to Research Access Page */}
                         <Box textAlign="center" mt={3}>
                             <Link to="/research">
                                 <Button variant="contained" color="secondary" size="large">

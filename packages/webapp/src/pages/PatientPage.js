@@ -464,55 +464,77 @@ const PatientPage = () => {
                   </tbody>
                 </table>
                 {showPrivateKeyForm && (
-                  <div
-                    style={{
-                      position: "fixed",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: "100%",
-                      backgroundColor: "rgba(0, 0, 0, 0.5)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <div
-                      style={{
-                        backgroundColor: "white",
-                        padding: "20px",
-                        borderRadius: "10px",
-                      }}
-                    >
-                      <Typography variant="h6" gutterBottom>
-                        Enter Your PIN
-                      </Typography>
-                      <TextField
-                        type="password"
-                        value={pin}
-                        onChange={(e) => setPin(e.target.value)}
-                        placeholder="Enter your PIN"
-                        fullWidth
-                        sx={{ mb: 2 }}
-                      />
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleGrantAccess}
-                        sx={{ mr: 1 }}
-                      >
-                        Submit
-                      </Button>
-                      <Button
-                        variant="contained"
-                        color="secondary"
-                        onClick={() => setShowPrivateKeyForm(false)}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                )}
+  <div
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 9999,
+    }}
+  >
+    <div
+      style={{
+        backgroundColor: "#1e1e1e",
+        color: "#fff",
+        padding: "30px",
+        borderRadius: "12px",
+        width: "90%",
+        maxWidth: "400px",
+        boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
+      }}
+    >
+      <Typography variant="h6" gutterBottom>
+        Enter Your PIN
+      </Typography>
+      <TextField
+        type="password"
+        value={pin}
+        onChange={(e) => setPin(e.target.value)}
+        placeholder="Enter your PIN"
+        fullWidth
+        sx={{
+          input: { color: "#fff" },
+          label: { color: "#ccc" },
+          mb: 2,
+        }}
+        InputProps={{
+          sx: {
+            "& .MuiInputBase-input": { color: "#fff" },
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: "#00bcd4",
+            },
+            "&:hover .MuiOutlinedInput-notchedOutline": {
+              borderColor: "#80deea",
+            },
+          },
+        }}
+      />
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "20px" }}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleGrantAccess}
+        >
+          Submit
+        </Button>
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={() => setShowPrivateKeyForm(false)}
+        >
+          Cancel
+        </Button>
+      </div>
+    </div>
+  </div>
+)}
+
               </>
             )}
           </CardContent>
