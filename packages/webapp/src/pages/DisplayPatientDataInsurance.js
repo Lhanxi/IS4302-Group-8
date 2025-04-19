@@ -105,7 +105,7 @@ function DisplayPatientInsurancePage() {
           encryptedData,
           decryptedAESKey
         );
-        if (decryptedData && decryptedData.insuranceAccess === "Yes") {
+        if (decryptedData && decryptedData.insuranceAccess === "True") {
           records.push(decryptedData);
         }
       }

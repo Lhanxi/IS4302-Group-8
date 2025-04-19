@@ -413,7 +413,7 @@ const PatientPage = () => {
                   fullWidth
                   sx={{ mb: 2 }}
                 >
-                  Go to Registration Page
+                  Go to Patient Records
                 </Button>
                 <Button
                   variant="contained"

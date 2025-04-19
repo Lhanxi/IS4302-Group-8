@@ -14,13 +14,14 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { decryptAESKey } from "../utils/DecryptAES";
 import { pinata } from "../utils/config";
-import { researchAccessABI } from "../utils/contractABI";
+import { researchAccessABI, patientABI, } from "../utils/contractABI";
 import {
   patientHandlerAddress,
   researchAccessAddress,
 } from "../utils/contractAddress";
 import dataAnonymiser from "../utils/dataAnonymiser";
 import encryptPatientData from "../utils/encryptPatientData";
+
 
 const ResearchAccessABI = researchAccessABI;
 const PatientHandlerAddress = patientHandlerAddress;
@@ -52,10 +53,6 @@ function UploadPatientData() {
 
   const patientHandlerAbi = [
     "function getPatientContract(address patient) public view returns (address)",
-  ];
-  const patientAbi = [
-    "function getDoctorEncryptionKey(address doctor) external view returns (string memory)",
-    "function addCID(string memory newCID) external",
   ];
 
   const getSigner = async () => {
@@ -149,7 +146,7 @@ function UploadPatientData() {
 
       const patientContract = await new ethers.Contract(
         patientContractAddress,
-        patientAbi,
+        patientABI,
         signer
       );
       console.log("Patient contract:", patientContract);

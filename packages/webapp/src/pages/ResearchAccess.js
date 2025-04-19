@@ -145,16 +145,10 @@ function ResearchAccess() {
                     }}
                   >
                     <Typography>
-                      <strong>Name:</strong> {record.name}
-                    </Typography>
-                    <Typography>
-                      <strong>ID:</strong> {record.identificationNumber}
-                    </Typography>
-                    <Typography>
                       <strong>Gender:</strong> {record?.gender || ""}
                     </Typography>
                     <Typography>
-                      <strong>Age:</strong> {record?.age || ""}
+                      <strong>Age group:</strong> {record?.ageGroup || ""}
                     </Typography>
                     <Typography>
                       <strong>Health:</strong> {record.healthRecords}
