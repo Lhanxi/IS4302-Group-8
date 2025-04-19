@@ -43,7 +43,7 @@ contract InsuranceCompanyOracle {
  
     /// @notice Removes a insurance company from the oracle.
     /// @param _insuranceCompany The wallet address of the insurance company to remove.
-    function removeDoctor(address _insuranceCompany) external onlyOwner {
+    function removeInsuranceCompany(address _insuranceCompany) external onlyOwner {
         delete insuranceCompanyName[_insuranceCompany];
         emit InsuranceCompanyRemoved(_insuranceCompany);
     }
