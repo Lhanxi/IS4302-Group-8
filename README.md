@@ -15,20 +15,18 @@ IS4302 Group 8
     npx hardhat node
     ```
 
-4. Go back to the original terminal and deploy the contract:
+4. Create a new terminal and deploy the contract:
     ```bash
     cd packages/hardhat
     npx hardhat run scripts/deploy.js --network localhost
     ```
 
-5. Copy the address that the contract is deployed to and update the contract address in `/IS4302-Group-8/packages/webapp/src/contractConfig.js`.
-
-6. Navigate to the `webapp` directory and start the application:
+5. Navigate to the `webapp` directory and start the application:
     ```bash
     cd ../webapp
     npm start
     ```
-7. Create a new terminal. Navigate to the `backend` directory and start the application:
+6. Create a new terminal. Navigate to the `backend` directory and start the application:
     ```bash
     cd packages/backend
     node server.js
